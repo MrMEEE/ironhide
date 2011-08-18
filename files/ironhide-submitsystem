@@ -1,0 +1,129 @@
+#!/bin/bash
+
+#
+# ----------------------------------------------------------------------------
+# "THE BEER-WARE LICENSE" (Revision 42):
+# <mj@casalogic.dk> wrote this file. As long as you retain this notice you
+# can do whatever you want with this stuff. If we meet some day, and you
+# think
+# this stuff is worth it, you can buy me a beer in return Martin Juhl
+# ----------------------------------------------------------------------------
+#
+
+#    This file is part of ironhide.
+#
+#    ironhide is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    ironhide is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with ironhide.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Definitions
+HEIGHT=500
+WIDTH=700
+
+# Program Paths
+LSPCI=`which lspci` 
+MODPROBE=`which modprobe`
+WHOAMI=`which whoami`
+WGET=`which wget`
+
+# INCLUDES
+source easybashgui
+
+# DEBUG? Comment Out...
+#exec 6>&2 ; exec 2> /dev/null
+
+
+LIB_CHECK="$(type "easybashgui" 2> /dev/null )"
+[ ${#LIB_CHECK} -eq 0 ] && echo -e "\n\n\n\nYou need to copy \"easybashgui\" in your path..." 1>&2 && exit 1
+
+
+
+if [[ "`$WHOAMI`" != "root" ]]; then 
+	x="alert_message --height $HEIGHT --width $WIDTH"
+	${x} "ironhide-submitsystem has been run without root priviledges and can't continue..\nPlease run with sudo, gksudo, kdesudo or similiar"
+	exit 1
+fi
+
+rm -rf "/tmp/index.google"
+$WGET -q --tries=10 --timeout=5 http://www.google.com -O /tmp/index.google &> /dev/null
+if [ ! -s /tmp/index.google ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+        ${x} "You are not connected to the Internet, ironhide-submitsystem can't run without internet access.\n"\
+	"Please rerun while connected to the internet."
+	exit 1
+fi
+
+x="message --width $WIDTH --height $HEIGHT"
+${x} "This program will submit your system information to the ironhide\n"\
+"database. Please ONLY submit systems that actually works.."
+
+x="input -w $WIDTH -h $HEIGHT 1"
+
+
+while [[ "$CONFIRMINGUSER" == "Please enter your name to continue." ]] || [[ "$CONFIRMINGUSER" == "" ]]; do
+${x} "Please enter your name to continue."
+CONFIRMINGUSER="$(0< "${dir_tmp}/${file_tmp}" )"
+done
+
+answer="${?}"
+
+if [ $answer -eq 1 ] ; then
+	x="message -w $WIDTH -h $HEIGHT"
+	${x} "System NOT submitted.."
+	exit 1
+fi
+
+
+
+DISTRO=$(cat /etc/issue | cut -f1 -d\\)
+MANUFACTURER=`dmidecode --string system-manufacturer`
+MODEL=`dmidecode --string system-product-name`
+
+if [ `cat /usr/local/bin/bumblebee-enablecard |grep \$\(acpi |wc -l` -gt 0  ]; then
+ STARTUP=`xxd -p /usr/local/bin/bumblebee-enablecard | sed -e ':a;N;$!ba;s/\n//g'`
+ SHUTDOWN=`xxd -p /usr/local/bin/bumblebee-disablecard | sed -e ':a;N;$!ba;s/\n//g'`
+ STARTUPSTATUS=AVAILABLE
+ SHUTDOWNSTATUS=AVAILABLE
+else
+ STARTUP=UNAVAILABLE
+ SHUTDOWN=UNAVAILABLE
+ STARTUPSTATUS=UNAVAILABLE
+ SHUTDOWNSTATUS=UNAVAILABLE
+fi
+clear
+
+x="question --width $WIDTH --height $HEIGHT"
+${x} "Distribution: $DISTRO\n"\
+"Manufacturer: $MANUFACTURER\n"\
+"Model: $MODEL\n"\
+"nVidia Startup acpi_call command(s): $STARTUPSTATUS\n"\
+"nVidia Shutdown acpi_call command(s): $SHUTDOWNSTATUS\n"\
+"User Reporting: $CONFIRMINGUSER\n\n"\
+"Are you sure your want to submit this system?"
+
+answer="${?}"
+if [ ${answer} -eq 1 ]; then
+	x="message -w $WIDTH -h $HEIGHT"
+	${x} "System NOT submitted.."
+	exit 1
+fi
+
+wget -O /tmp/systemsubmitted "http://www.martin-juhl.dk/ironhide/?manufacturer=`echo $MANUFACTURER`&model=`echo $MODEL`&start=`echo $STARTUP`&shutdown=`echo $SHUTDOWN`&user=`echo $CONFIRMINGUSER`&distro=`echo $DISTRO`&addmachine=1" 1>/dev/null 2>/dev/null
+
+if [ `cat /tmp/systemsubmitted | grep "System Added" |wc -l` -gt 0 ];then
+	x="message -w $WIDTH -h $HEIGHT"
+	${x} "System added succesfully. Thanks."
+else
+	x="message -w $WIDTH -h $HEIGHT"
+	${x} "System not added, make sure you have internet access and try again. Thanks."
+fi

@@ -1,0 +1,476 @@
+#!/bin/bash
+
+#
+# ----------------------------------------------------------------------------
+# "THE BEER-WARE LICENSE" (Revision 42):
+# <mj@casalogic.dk> wrote this file. As long as you retain this notice you
+# can do whatever you want with this stuff. If we meet some day, and you
+# think
+# this stuff is worth it, you can buy me a beer in return Martin Juhl
+# ----------------------------------------------------------------------------
+#
+
+#    This file is part of ironhide.
+#
+#    ironhide is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    ironhide is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with ironhide.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Definitions
+ARCH=`uname -m`
+CONFIGURATIONFILE=/etc/default/ironhide
+DATAFOLDER=/usr/share/ironhide/data/
+LASTUPDATE=`stat -c %y $DATAFOLDER/allmachineinfo | cut -d ' ' -f1`
+HEIGHT=500
+WIDTH=700
+CONFIGMODE=NONE
+NVIDIABUSID=`grep BusID /etc/X11/xorg.conf.nvidia | sed -e "s/[ \t]*BusID[ \t]*\"\(.*\)\"/\1/g"`
+CONNECTEDMONITOR=`grep ConnectedMonitor /etc/X11/xorg.conf.nvidia | sed -e "s/[ \t]*Option[ \t]*\"ConnectedMonitor\"[ \t]*\"\(.*\)\"/\1/g"`
+NVIDIABUSIDCUT=`grep BusID /etc/X11/xorg.conf.nvidia | sed -e "s/[ \t]*BusID[ \t]*\"\(.*\)\"/\1/g" |cut -d: -f2,3`
+PIPE=/tmp/pipe
+
+# Program Paths
+LSPCI=`which lspci` 
+MODPROBE=`which modprobe`
+WHOAMI=`which whoami`
+WGET=`which wget`
+
+# INCLUDES
+source easybashgui
+source $CONFIGURATIONFILE
+
+# DEBUG? Comment Out...
+exec 6>&2 ; exec 2> /dev/null
+
+
+LIB_CHECK="$(type "easybashgui" 2> /dev/null )"
+[ ${#LIB_CHECK} -eq 0 ] && echo -e "\n\n\n\nYou need to copy \"easybashgui\" in your path\n\n\n\n" 1>&2 && exit 1
+
+
+
+if [[ "`$WHOAMI`" != "root" ]]; then 
+	x="alert_message --height $HEIGHT --width $WIDTH"
+	${x} "ironhide-configuration has been run without root priviledges and can't continue..\nPlease run with sudo, gksudo, kdesudo or similiar"
+	exit 1
+fi
+
+if [ $IRONHIDE_CONFIGURED -eq 1 ]; then
+	x="question --height $HEIGHT --width $WIDTH"
+	${x} "Ironhide Configuration.\n\nDo you want to reconfigure ironhide????"
+	answer="${?}"
+	if [ ${answer} -eq 1 ]; then
+		exit 2
+	fi
+fi
+
+rm -rf "/tmp/index.google"
+$WGET -q --tries=10 --timeout=5 http://www.google.com -O /tmp/index.google &> /dev/null
+if [ ! -s /tmp/index.google ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+        ${x} "You are not connected to the Internet, and can't fetch the lastest configuration database.\n \
+	if you are experiencing problems, please try to rerun the configuration while connected to the internet."
+	DOUPDATE=0
+else
+	x="question --width $WIDTH --height $HEIGHT"
+	${x} "Do you want to update the configuration database, last data is from $LASTUPDATE???\n"
+	answer="${?}"
+	if [ ${answer} -eq 1 ]; then
+		DOUPDATE=0
+	else
+		DOUPDATE=1
+	fi
+fi
+echo $DOUPDATE
+
+# Since Ironhide is a project to get Optimus laptops to work, we can safely
+# assume that the nvidia driver is not used for the default display (:0)
+# Therefore default to mesa instead of nvidia. vglrun sets the GL library
+# path to /usr/lib{,32}/nvidia-current for programs running on the display
+# accelerated by the nvidia card. Since most graphical applications are not
+# statically linked nor setuid/setgid binaries, this is fine. There is an  
+# exception on this: programs which overwrite LD_LIBRARY_PATH will fail to 
+# load the nvidia GL driver. However, this method will allow GL on the Intel
+# display where the previous situation breaks it.
+# TLDR: this allows the intel display to use GL, the ironhide display will
+#       load the nvidia driver through vglrun in almost all cases
+
+# this takes care of setting correct links which is used on
+# /usr/lib/nvidia-current/gl.conf
+# multiarch support
+for arch in x86_64-linux-gnu i386-linux-gnu; do
+	# check if the link exist to prevent error messages
+	if update-alternatives --list ${arch}_gl_conf >/dev/null 2>&1; then
+		sudo update-alternatives --force --set ${arch}_gl_conf /usr/lib/$arch/mesa/ld.so.conf
+	fi
+done
+# versions before Oneiric without multiarch
+if update-alternatives --list gl_conf >/dev/null 2>&1; then
+	sudo update-alternatives --force --set gl_conf /usr/lib/mesa/ld.so.conf
+fi
+# remove a legacy link which was not used anyway
+sudo rm -rf /etc/alternatives/xorg_extra_modules-ironhide
+sudo rm -rf /etc/alternatives/_xorg_extra_modules
+
+# fix appeared in commit 68a75db4df628a910886, it should remove an excess
+# symlink; /usr/lib/xorg/extra-modules ->
+# /etc/alternatives/{_,}xorg_extra_modules -> /usr/lib/nvidia-current/xorg
+
+sudo rm -f /usr/lib/nvidia-current/xorg/xorg
+
+# Refresh the dynamic loader search path so /etc/ld.so.conf.d/GL.conf ->
+# /etc/alternatives/gl_conf -> /usr/lib/mesa/ld.so.conf
+sudo ldconfig
+
+x="progress -w 600"
+
+if [[ ! -p $PIPE ]]; then
+    mkfifo $PIPE
+fi
+
+tail -f $PIPE | ${x} "Setting up and Downloading Configuration... Please wait" &
+
+echo 0 >> $PIPE
+echo 15 >> $PIPE
+if [ $DOUPDATE -eq 1 ]; then
+	if [ -f $DATAFOLDER/machineinfo ]; then
+		mv $DATAFOLDER/machineinfo $DATAFOLDER/machineinfo-`stat -c %y $DATAFOLDER/machineinfo | cut -d ' ' -f1`
+	fi
+	wget -O $DATAFOLDER/machineinfo "http://martin-juhl.dk/ironhide/?searchitem=`sudo dmidecode --string system-product-name`&search=1" 1>/dev/null 2>/dev/null
+fi
+
+echo 33 >> $PIPE
+i=1
+unset profiles
+while read line
+do
+        profiles[$i]="$i: `echo $line | cut -f1 -d\|``echo $line |cut -f2 -d\|` by`echo $line | cut -f5 -d\|`, Confirmed by`echo $line |cut -f6 -d\|` users."
+        ((i+=1))
+done < /usr/share/ironhide/data/machineinfo
+
+profiles[i]="9997: Enter Manual Configuration" 
+((i+=1))
+profiles[i]="9998: Show all profiles."
+((i+=1))
+profiles[i]="9999: Do not configure now."
+echo 50 >> $PIPE
+if [ $DOUPDATE -eq 1 ]; then
+	if [ -f $DATAFOLDER/allmachineinfo ]; then
+                mv $DATAFOLDER/allmachineinfo $DATAFOLDER/allmachineinfo-`stat -c %y $DATAFOLDER/allmachineinfo | cut -d ' ' -f1`
+        fi
+	wget -O $DATAFOLDER/allmachineinfo "http://martin-juhl.dk/ironhide/?searchitem=showall&search=1" 1>/dev/null 2>/dev/null
+fi
+echo 75 >> $PIPE
+
+s=1
+i=1
+unset allprofiles
+while read line  
+do
+        allprofiles[i]="$i: `echo $line | cut -f1 -d\|``echo $line |cut -f2 -d\|` by`echo $line | cut -f5 -d\|`, Confirmed by`echo $line |cut -f6 -d\|` users."
+        ((i+=1))
+done < $DATAFOLDER/allmachineinfo
+allprofiles[i]="9997: Enter Manual Configuration" 
+((i+=1))
+allprofiles[i]="9999: Do not configure now."
+
+echo 100 >> $PIPE
+
+while [ "$CONFIGMODE" != "MANUAL" ] && [ "$CONFIGMODE" != "DONE" ] ; do
+
+	if [ "$CONFIGMODE" != "AUTO" ] ; then
+		case `cat $DATAFOLDER/machineinfo | wc -l` in
+		0)
+			x="question --width $WIDTH --height $HEIGHT"
+			${x} "We have no configuration available for your system. Entering manual configuration.\n\
+			If you get ironhide running, please run ironhide-submitsystem.\n\
+			Do you want to run manual configuration, if not, you'll be presented with a full list of system profiles"
+			answer="${?}"
+			if [ ${answer} -eq 1 ]; then
+				CONFIGMODE=FULLLIST
+			else
+				CONFIGMODE=MANUAL
+			fi
+			;;
+		1)
+			CONFIGMODE=AUTO
+			MANUFACTURER=`cat $DATAFOLDER/machineinfo |cut -f1 -d\|`
+			MODEL=`cat $DATAFOLDER/machineinfo |cut -f2 -d\|`
+			USER=`cat $DATAFOLDER/machineinfo |cut -f5 -d\|`
+			POWERON=`cat $DATAFOLDER/machineinfo |cut -f3 -d\|`
+			POWEROFF=`cat $DATAFOLDER/machineinfo |cut -f4 -d\|`
+			CONFIRMEDBY=`cat $DATAFOLDER/machineinfo |cut -f6 -d\|`
+			OS=`cat $DATAFOLDER/machineinfo |cut -f7 -d\|`
+			POWERSTATUS=`cat $DATAFOLDER/machineinfo |sed -n 1p|cut -f3 -d\| | sed -e 's/ //g'`
+			;;
+		*)
+			x="menu -w $WIDTH -h $HEIGHT"
+			${x} "${profiles[@]}"
+			choice="$(0< "${dir_tmp}/${file_tmp}" )"
+			choice=`echo $choice | cut -f1 -d:`
+			if [[ $choice == "9998" ]] ; then
+				CONFIGMODE=FULLLIST
+			elif [[ $choice == 9999 ]] || [[ $choice == "" ]]; then
+				x="message --width $WIDTH --height $HEIGHT"
+				${x} "Ironhide has NOT been configured, and probably won't work."
+				exit 0
+			elif [[ $choice == 9997 ]] ; then
+				CONFIGMODE=MANUAL
+			else
+				CONFIGMODE=AUTO
+				MANUFACTURER=`cat $DATAFOLDER/machineinfo |sed -n \`echo $choice\`p|cut -f1 -d\|`
+				MODEL=`cat $DATAFOLDER/machineinfo |sed -n \`echo $choice\`p|cut -f2 -d\|`
+				USER=`cat $DATAFOLDER/machineinfo |sed -n \`echo $choice\`p|cut -f5 -d\|`
+				POWERON=`cat $DATAFOLDER/machineinfo |sed -n \`echo $choice\`p|cut -f3 -d\|`
+				POWEROFF=`cat $DATAFOLDER/machineinfo |sed -n \`echo $choice\`p|cut -f4 -d\|`
+				CONFIRMEDBY=`cat $DATAFOLDER/machineinfo |sed -n \`echo $choice\`p|cut -f6 -d\|`
+				OS=`cat $DATAFOLDER/machineinfo |sed -n \`echo $choice\`p|cut -f7 -d\|`
+				POWERSTATUS=`cat $DATAFOLDER/machineinfo |sed -n \`echo $choice\`p|cut -f3 -d\| | sed -e 's/ //g'`
+			fi
+			;;
+		esac
+	fi
+	echo $CONFIGMODE
+
+	if [ "$CONFIGMODE" = "AUTO"  ] ; then
+		if [ "$POWERSTATUS" = "UNAVAILABLE"  ] ; then
+			PWSTATUS="Unavailable"
+		else
+			PWSTATUS="Available"
+		fi
+		
+		x="question --width $WIDTH --height $HEIGHT"
+		${x} "The following system profile has been found/selected:\n"\
+		"Machine: $MANUFACTURER $MODEL\n"\
+		"Power Control Scripts: $PWSTATUS\n"\
+		"Tested on: $OS\n"\
+		"Submitted by: $USER\n"\
+		"Confirmed working by $CONFIRMEDBY user(s).\n"\
+		"Do you want to use this configuration?\n"
+
+		answer="${?}"
+		if [ ${answer} -eq 1 ]; then
+			CONFIGMODE=NONE
+		else
+			CONFIGMODE=DONE
+		fi
+		
+	fi
+
+	if [ "$CONFIGMODE" = "FULLLIST" ] ; then
+		x="menu -w $WIDTH -h $HEIGHT"
+		${x} "${allprofiles[@]}"
+		choice="$(0< "${dir_tmp}/${file_tmp}" )"
+		choice=`echo $choice | cut -f1 -d:`
+			
+		if [ $choice -eq 9999 ] ; then
+			x="message --width $WIDTH --height $HEIGHT"
+			${x} "Ironhide has NOT been configured, and probably won't work."
+			exit 0
+		elif [ $choice -eq 9997 ] ; then
+			CONFIGMODE=MANUAL
+		else
+			CONFIGMODE=AUTO
+			MANUFACTURER=`cat $DATAFOLDER/allmachineinfo |sed -n \`echo $choice\`p|cut -f1 -d\|`
+			MODEL=`cat $DATAFOLDER/allmachineinfo |sed -n \`echo $choice\`p|cut -f2 -d\|`
+			USER=`cat $DATAFOLDER/allmachineinfo |sed -n \`echo $choice\`p|cut -f5 -d\|`
+			POWERON=`cat $DATAFOLDER/allmachineinfo |sed -n \`echo $choice\`p|cut -f3 -d\|`
+			POWEROFF=`cat $DATAFOLDER/allmachineinfo |sed -n \`echo $choice\`p|cut -f4 -d\|`
+			CONFIRMEDBY=`cat $DATAFOLDER/allmachineinfo |sed -n \`echo $choice\`p|cut -f6 -d\|`
+			OS=`cat $DATAFOLDER/allmachineinfo |sed -n \`echo $choice\`p|cut -f7 -d\|`
+			POWERSTATUS=`cat $DATAFOLDER/allmachineinfo |sed -n \`echo $choice\`p|cut -f3 -d\| | sed -e 's/ //g'`
+		fi
+	fi
+done
+
+if [ "$CONFIGMODE" == "MANUAL" ]; then
+	POWERON="UNAVAILABLE"
+	if [ `${LSPCI} |grep VGA |wc -l` -eq 2 ]; then
+		NVIDIABUSID=`${LSPCI} | grep VGA | grep nVidia | awk '{ print "PCI:"$1 }' | sed s/\\\./:/g`
+	elif [ `${LSPCI} |grep 3D |wc -l` -eq 1 ]; then
+		NVIDIABUSID=`${LSPCI} | grep 3D  | grep nVidia | awk '{ print "PCI:"$1 }' | sed s/\\\./:/g`
+	else
+		x="message --width $WIDTH --height $HEIGHT"
+		${x} "The BusID of the nVidia card can't be determined.\n"\
+		"You must correct this manually in /etc/X11/xorg.conf.nvidia\n"\
+		"Please report this problem..\n"
+	fi
+fi
+
+sudo sed -i "s/\([ \t]*BusID[ \t]*\)\".*\"/\1\"$NVIDIABUSID\"/g" /etc/X11/xorg.conf.nvidia
+
+if [ "$CONFIGMODE" == "MANUAL" ]; then
+	CONNECTEDMONITOR="UNKNOWN"
+	if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 1 ]; then
+		if [ -f /usr/local/bin/ironhide-enablecard ]; then
+			/usr/local/bin/ironhide-enablecard
+		fi
+		if [ -f /usr/bin/ironhide-enablecard ]; then
+			/usr/bin/ironhide-enablecard
+		fi
+	fi
+	${MODPROBE} nvidia-current
+	if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 0 ] ; then
+		 if [ `LD_LIBRARY_PATH=/usr/lib/nvidia-current /usr/lib/nvidia-current/bin/nvidia-xconfig --query-gpu-info | grep "Display Devices" | cut -f2 -d":"` -gt 0 ] ; then
+			 CONNECTEDMONITOR=`LD_LIBRARY_PATH=/usr/lib/nvidia-current /usr/lib/nvidia-current/bin/nvidia-xconfig --query-gpu-info | grep "Display Device 0" | cut -f2 -d\( | cut -f1 -d\)`
+		fi
+	fi
+	${MODPROBE} -r nvidia
+	fi
+	if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 0 ]; then
+		if [ -f /usr/local/bin/ironhide-disablecard ]; then
+			/usr/local/bin/ironhide-disablecard
+		fi
+		if [ -f /usr/bin/ironhide-disablecard ]; then
+			/usr/bin/ironhide-disablecard
+		fi
+	fi
+	if [ "$CONNECTEDMONITOR" != "CRT-0" ] && [ "$CONNECTEDMONITOR" != "DFP-0" ];then
+		x="message --width $WIDTH --height $HEIGHT"
+		${x} "The device for the nVidia monitor could not be detected, please\n"\
+		"manually choose the device, if your having problems, try another."
+		x="menu -w $WIDTH -h $HEIGHT"
+		${x} "CRT-0" "DFP-0" "Manually Enter"
+		choice="$(0< "${dir_tmp}/${file_tmp}" )"
+                case "$choice" in
+                "CRT-0")
+                        CONNECTEDMONITOR="CRT-0"
+                ;;
+                "DFP-0")
+                        CONNECTEDMONITOR="DFP-0"
+                ;;
+                *)
+			x="input -w $WIDTH -h $HEIGHT 1"
+			${x} "Enter nVidia monitor device."
+                        CONNECTEDMONITOR="$(0< "${dir_tmp}/${file_tmp}" )"
+                ;;
+                esac
+        fi
+fi
+
+sed -i "s/\([ \t]*Option[ \t]*\"ConnectedMonitor\"[ \t]*\)".*"/\1\"$CONNECTEDMONITOR\"/g" /etc/X11/xorg.conf.nvidia
+
+#
+#	Always try to enable the card before switching scripts
+#
+if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 1 ]; then
+	if [ -f /usr/local/bin/ironhide-enablecard ] ; then
+		/usr/local/bin/ironhide-enablecard
+	fi
+	if [ -f /usr/bin/ironhide-enablecard ] ; then
+		/usr/bin/ironhide-enablecard
+	fi
+fi
+
+if [ ! "$POWERON" == "UNAVAILABLE" ] ; then
+	echo $POWERON | xxd -r -p > /usr/local/bin/ironhide-enablecard
+	echo $POWEROFF | xxd -r -p > /usr/local/bin/ironhide-disablecard
+else
+	x="message --width $WIDTH --height $HEIGHT"
+	${x} "No power-on/off configuration has been reported for your machine,\n"\
+	"please manually enter configuration in:\n\n"\
+	"/usr/local/bin/ironhide-enablecard and /usr/local/bin/ironhide-disablecard\n\n"\
+	"Some examples are available in /usr/share/doc/ironhide/."
+
+	if [ ! -f /usr/local/bin/ironhide-enablecard ] ; then
+		# Not installed
+		cp /usr/share/doc/ironhide/examples/ironhide-enablecard.template /usr/local/bin/ironhide-enablecard
+	else
+		# Already Exists
+		x="message --width $WIDTH --height $HEIGHT"
+		${x} "nVidia card enable-script: /usr/local/bin/ironhide-enablecard exists.\n"\
+		"Moving old script to /usr/local/bin/ironhide-enablecard.old."
+		mv /usr/local/bin/ironhide-enablecard /usr/local/bin/ironhide-enablecard.old
+		cp /usr/share/doc/ironhide/examples/ironhide-enablecard.template /usr/local/bin/ironhide-enablecard
+		chmod +x /usr/local/bin/ironhide-enablecard
+	fi
+	if [ ! -f /usr/local/bin/ironhide-disablecard ]; then
+		# Not installed
+		cp /usr/share/doc/ironhide/examples/ironhide-disablecard.template /usr/local/bin/ironhide-disablecard
+	else
+		# Already Exists
+		x="message --width $WIDTH --height $HEIGHT"
+		${x} "nVidia card enable-script: /usr/local/bin/ironhide-disablecard exists.\n"\
+		"Moving old script to /usr/local/bin/ironhide-disablecard.old."
+		mv /usr/local/bin/ironhide-disablecard /usr/local/bin/ironhide-disablecard.old
+		cp /usr/share/doc/ironhide/examples/ironhide-disablecard.template /usr/local/bin/ironhide-disablecard
+		chmod +x /usr/local/bin/ironhide-disablecard
+	fi
+fi
+
+if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 0 ]; then
+	if [ -f /usr/local/bin/ironhide-disablecard ]; then
+		/usr/local/bin/ironhide-disablecard
+	fi  
+	if [ -f /usr/bin/ironhide-disablecard ]; then
+		/usr/bin/ironhide-disablecard
+	fi
+fi
+
+chmod +x /usr/local/bin/ironhide*
+update-rc.d ironhide defaults
+
+x="message --width $WIDTH --height $HEIGHT"
+${x} "The Image Transport is how the images are transferred from the\n"\
+"nVidia card to the Intel card, people has different experiences of\n"\
+"performance, but just select the default if you are in doubt.\n\n"\
+"I recently discovered that yuv and jpeg both has some lagging\n"\
+"this is only noticable in fast moving games, such as 1st person\n"\
+"shooters and for me, its only good enough with xv, even though\n"\
+"xv brings down performance a little." 
+x="menu -w $WIDTH -h $HEIGHT"
+${x} "YUV" "JPEG" "PROXY" "XV (Default)" "RGB"
+
+case "$choice" in
+"YUV")
+	IMAGETRANSPORT="yuv"
+	;;
+"JPEG")
+	IMAGETRANSPORT="jpeg"
+	;;
+"PROXY")
+	IMAGETRANSPORT="proxy"
+	;;
+"XV (Default)")
+	IMAGETRANSPORT="xv"
+	;;
+"RGB")
+	IMAGETRANSPORT="rgb"
+	;;
+*)
+	IMAGETRANSPORT="xv"
+	;;
+esac
+
+sed -i 's/VGL_COMPRESS.*/VGL_COMPRESS='$IMAGETRANSPORT'/' $DEFAULT_FILE
+
+#
+#	Set userrights
+#
+if [ "`grep ironhide /etc/group`" == "" ] ; then
+	groupadd ironhide
+fi
+
+gpasswd -a `env |grep SUDO_USER |cut -f2 -d=` ironhide
+
+#
+#	That's all folks
+#
+
+x="message --width $WIDTH --height $HEIGHT"
+${x} "Ironhide is now configured.\n\n"\
+"If your system is working, please run the ironhide-submitsystem script\n\n"\
+"If you have any problems, please run ironhide-bugreport\n\n"\
+"Have fun...."
+
+sudo sed -i "s/IRONHIDE_CONFIGURED=.*/IRONHIDE_CONFIGURED=1/g" $CONFIGURATIONFILE
+

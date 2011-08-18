@@ -1,0 +1,10 @@
+#!/bin/bash
+HEIGHT=500
+WIDTH=700
+source easybashgui
+if [ ! -s /tmp/index.google ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	        ${x} "You are not connected to the Internet, ironhide-submitsystem can't run without internet access.\n"\
+	        	"Please rerun while connected to the internet."
+	        		exit 1
+	        		fi

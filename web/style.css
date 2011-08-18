@@ -1,0 +1,12 @@
+/* Sortable tables */
+table.sortable thead {
+    background-color:#eee;
+    color:#666666;
+    font-weight: bold;
+    cursor: default;
+    font-size:0.875em;
+}
+table.sortable {
+font-size:0.700em;
+text-align:right;
+}

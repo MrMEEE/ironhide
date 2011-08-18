@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ -f machineinfo ]; then
+	mv machineinfo machineinfo-`stat -c %y machineinfo | cut -d ' ' -f1`
+fi
+
+if [ -f allmachineinfo ]; then
+	mv allmachineinfo allmachineinfo-`stat -c %y allmachineinfo | cut -d ' ' -f1`            
+fi
+        
+
+wget -O machineinfo "http://martin-juhl.dk/bumblebee/?searchitem=`sudo dmidecode --string system-product-name`&search=1" 1>/dev/null 2>/dev/null
+
+wget -O allmachineinfo "http://martin-juhl.dk/bumblebee/?searchitem=showall&search=1" 1>/dev/null 2>/dev/null
