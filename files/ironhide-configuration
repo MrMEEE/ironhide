@@ -50,7 +50,7 @@ source easybashgui
 source $CONFIGURATIONFILE
 
 # DEBUG? Comment Out...
-#exec 6>&2 ; exec 2> /dev/null
+exec 6>&2 ; exec 2> /dev/null
 
 if [[ "$HOME" == "/root" ]]; then
 	echo "Do NOT run ironhide-configuration as the root user.."
