@@ -50,8 +50,13 @@ source easybashgui
 source $CONFIGURATIONFILE
 
 # DEBUG? Comment Out...
-exec 6>&2 ; exec 2> /dev/null
+#exec 6>&2 ; exec 2> /dev/null
 
+if [[ "$HOME" == "/root" ]]; then
+	echo "Do NOT run ironhide-configuration as the root user.."
+	echo "Please use sudo, gksudo, kdesudo or similiar."
+	exit 1
+fi
 
 LIB_CHECK="$(type "easybashgui" 2> /dev/null )"
 [ ${#LIB_CHECK} -eq 0 ] && echo -e "\n\n\n\nYou need to copy \"easybashgui\" in your path\n\n\n\n" 1>&2 && exit 1
@@ -60,7 +65,7 @@ LIB_CHECK="$(type "easybashgui" 2> /dev/null )"
 
 if [[ "`$WHOAMI`" != "root" ]]; then 
 	x="alert_message --height $HEIGHT --width $WIDTH"
-	${x} "ironhide-configuration has been run without root priviledges and can't continue..\nPlease run with sudo, gksudo, kdesudo or similiar"
+	${x} "ironhide-configuration has been run without root priviledges and can't continue..\nPlease run with sudo, gksudo, kdesudo or similiar."
 	exit 1
 fi
 
