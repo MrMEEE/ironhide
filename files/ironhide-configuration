@@ -196,9 +196,9 @@ while [ "$CONFIGMODE" != "MANUAL" ] && [ "$CONFIGMODE" != "DONE" ] ; do
 		case `cat $DATAFOLDER/machineinfo | wc -l` in
 		0)
 			x="question --width $WIDTH --height $HEIGHT"
-			${x} "We have no configuration available for your system. Entering manual configuration.\n\
-			If you get ironhide running, please run ironhide-submitsystem.\n\
-			Do you want to run manual configuration, if not, you'll be presented with a full list of system profiles"
+			${x} "We have no configuration available for your system. Entering manual configuration.\n"\
+			"If you get ironhide running, please run ironhide-submitsystem.\n"\
+			"Do you want to run manual configuration, if not, you'll be presented with a full list of system profiles."
 			answer="${?}"
 			if [ ${answer} -eq 1 ]; then
 				CONFIGMODE=FULLLIST
