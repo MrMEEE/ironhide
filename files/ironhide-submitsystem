@@ -40,7 +40,7 @@ WGET=`which wget`
 source easybashgui
 
 # DEBUG? Comment Out...
-#exec 6>&2 ; exec 2> /dev/null
+exec 6>&2 ; exec 2> /dev/null
 
 
 LIB_CHECK="$(type "easybashgui" 2> /dev/null )"
