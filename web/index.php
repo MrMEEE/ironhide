@@ -48,9 +48,9 @@ if(isset($_GET["addmachine"])){
     }
     else{
      if($manufacturer!=""&&$model!=""&&$user!=""&&$user!=$row['Confirming User']){
-      $sql = 'INSERT into confirmed (Manufacturer, Model, `nVidia Startup`,
+      $sql = sprintf('INSERT into confirmed (Manufacturer, Model, `nVidia Startup`,
         `nVidia Shutdown`, `Submitting User`, `Users Confirming`, Distribution) VALUES
-        ("%s", "%s", "%s", "%s", "%s", '1', "%s")',
+        ("%s", "%s", "%s", "%s", "%s", 1, "%s")',
         mysql_real_escape_string($manufacturer), mysql_real_escape_string($model),
         mysql_real_escape_string($start), mysql_real_escape_string($shutdown),
         mysql_real_escape_string($user), mysql_real_escape_string($distro)
