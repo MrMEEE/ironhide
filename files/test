@@ -3,4 +3,9 @@ HEIGHT=500
 WIDTH=700
 source easybashgui
 
-echo $HOME
+ERRORS=0
+POWERON="UNAVAILABLE"
+
+if [[ $ERRORS == 0 ]] && [[ ! $POWERON == "UNAVAILABLE" ]]; then
+	echo "Test"
+fi

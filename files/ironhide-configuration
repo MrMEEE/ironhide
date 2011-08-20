@@ -44,6 +44,7 @@ LSPCI=`which lspci`
 MODPROBE=`which modprobe`
 WHOAMI=`which whoami`
 WGET=`which wget`
+GLXGEARS=`which glxgears`
 
 # INCLUDES
 source easybashgui
@@ -138,9 +139,11 @@ sudo ldconfig
 
 x="progress -w 600"
 
-if [[ ! -p $PIPE ]]; then
-    mkfifo $PIPE
+if [[ -p $PIPE ]]; then
+    rm $PIPE
 fi
+
+mkfifo $PIPE
 
 tail -f $PIPE | ${x} "Setting up and Downloading Configuration... Please wait" &
 
@@ -156,11 +159,13 @@ fi
 echo 33 >> $PIPE
 i=1
 unset profiles
-while read line
-do
-        profiles[$i]="$i: `echo $line | cut -f1 -d\|``echo $line |cut -f2 -d\|` by`echo $line | cut -f5 -d\|`, Confirmed by`echo $line |cut -f6 -d\|` users."
-        ((i+=1))
-done < /usr/share/ironhide/data/machineinfo
+if [ -f $DATAFOLDER/machineinfo ]; then
+	while read line
+	do
+		profiles[$i]="$i: `echo $line | cut -f1 -d\|``echo $line |cut -f2 -d\|` by`echo $line | cut -f5 -d\|`, Confirmed by`echo $line |cut -f6 -d\|` users."
+		((i+=1))
+	done < /usr/share/ironhide/data/machineinfo
+fi
 
 profiles[i]="9997: Enter Manual Configuration" 
 ((i+=1))
@@ -310,6 +315,7 @@ else
 	${x} "The BusID of the nVidia card can't be determined.\n"\
 	"You must correct this manually in /etc/X11/xorg.conf.nvidia\n"\
 	"Please report this problem..\n"
+	exit 1
 fi
 
 sudo sed -i "s/\([ \t]*BusID[ \t]*\)\".*\"/\1\"$NVIDIABUSID\"/g" /etc/X11/xorg.conf.nvidia
@@ -341,7 +347,6 @@ if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 0 ]; then
 	fi
 fi
 
-echo "test"
 if [ "$CONNECTEDMONITOR" != "CRT-0" ] && [ "$CONNECTEDMONITOR" != "DFP-0" ];then
 	x="message --width $WIDTH --height $HEIGHT"
 	${x} "The device for the nVidia monitor could not be detected, please\n"\
@@ -363,7 +368,6 @@ if [ "$CONNECTEDMONITOR" != "CRT-0" ] && [ "$CONNECTEDMONITOR" != "DFP-0" ];then
                 ;;
         esac
 fi
-echo "test1"
 
 sed -i "s/\([ \t]*Option[ \t]*\"ConnectedMonitor\"[ \t]*\)".*"/\1\"$CONNECTEDMONITOR\"/g" /etc/X11/xorg.conf.nvidia
 
@@ -378,55 +382,6 @@ if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 1 ]; then
 		/usr/bin/ironhide-enablecard
 	fi
 fi
-
-if [ ! "$POWERON" == "UNAVAILABLE" ] ; then
-	echo $POWERON | xxd -r -p > /usr/local/bin/ironhide-enablecard
-	echo $POWEROFF | xxd -r -p > /usr/local/bin/ironhide-disablecard
-else
-	x="message --width $WIDTH --height $HEIGHT"
-	${x} "No power-on/off configuration has been reported for your machine,\n"\
-	"please manually enter configuration in:\n\n"\
-	"/usr/local/bin/ironhide-enablecard and /usr/local/bin/ironhide-disablecard\n\n"\
-	"Some examples are available in /usr/share/doc/ironhide/."
-
-	if [ ! -f /usr/local/bin/ironhide-enablecard ] ; then
-		# Not installed
-		cp /usr/share/doc/ironhide/examples/ironhide-enablecard.template /usr/local/bin/ironhide-enablecard
-	else
-		# Already Exists
-		x="message --width $WIDTH --height $HEIGHT"
-		${x} "nVidia card enable-script: /usr/local/bin/ironhide-enablecard exists.\n"\
-		"Moving old script to /usr/local/bin/ironhide-enablecard.old."
-		mv /usr/local/bin/ironhide-enablecard /usr/local/bin/ironhide-enablecard.old
-		cp /usr/share/doc/ironhide/examples/ironhide-enablecard.template /usr/local/bin/ironhide-enablecard
-		chmod +x /usr/local/bin/ironhide-enablecard
-	fi
-	if [ ! -f /usr/local/bin/ironhide-disablecard ]; then
-		# Not installed
-		cp /usr/share/doc/ironhide/examples/ironhide-disablecard.template /usr/local/bin/ironhide-disablecard
-	else
-		# Already Exists
-		x="message --width $WIDTH --height $HEIGHT"
-		${x} "nVidia card enable-script: /usr/local/bin/ironhide-disablecard exists.\n"\
-		"Moving old script to /usr/local/bin/ironhide-disablecard.old."
-		mv /usr/local/bin/ironhide-disablecard /usr/local/bin/ironhide-disablecard.old
-		cp /usr/share/doc/ironhide/examples/ironhide-disablecard.template /usr/local/bin/ironhide-disablecard
-		chmod +x /usr/local/bin/ironhide-disablecard
-	fi
-fi
-
-chmod +x /usr/local/bin/ironhide*
-
-if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 0 ]; then
-	if [ -f /usr/local/bin/ironhide-disablecard ]; then
-		/usr/local/bin/ironhide-disablecard
-	fi  
-	if [ -f /usr/bin/ironhide-disablecard ]; then
-		/usr/bin/ironhide-disablecard
-	fi
-fi
-
-update-rc.d ironhide defaults
 
 x="message --width $WIDTH --height $HEIGHT"
 ${x} "The Image Transport is how the images are transferred from the\n"\
@@ -461,6 +416,151 @@ case "$choice" in
 esac
 
 sed -i 's/VGL_COMPRESS.*/VGL_COMPRESS='$IMAGETRANSPORT'/' $CONFIGURATIONFILE
+
+if [ -f /usr/local/bin/ironhide-enablecard ] ; then
+	mv /usr/local/bin/ironhide-enablecard /usr/local/bin/ironhide-enablecard.old
+	x="message --width $WIDTH --height $HEIGHT"
+	${x} "nVidia card enable-script: /usr/local/bin/ironhide-enablecard exists.\n"\
+	"Moved old script to /usr/local/bin/ironhide-enablecard.old."
+fi
+if [ -f /usr/local/bin/ironhide-disablecard ]; then
+	mv /usr/local/bin/ironhide-disablecard /usr/local/bin/ironhide-disablecard.old
+	x="message --width $WIDTH --height $HEIGHT"
+	${x} "nVidia card enable-script: /usr/local/bin/ironhide-disablecard exists.\n"\
+	"Moving old script to /usr/local/bin/ironhide-disablecard.old."
+fi
+
+# Test basic functionality
+
+/etc/init.d/ironhide enable
+
+ERRORS=`cat /var/log/Xorg.\`echo $VGL_DISPLAY |cut -f2 -d:\`.log |grep EE |grep -v kbd |grep -v MIT-SCREEN-SAVER |grep -v "not implemented" | wc -l`
+
+/etc/init.d/ironhide disable
+
+if [[ $ERRORS == 0 ]]; then
+	x="message --width $WIDTH --height $HEIGHT"
+	${x} "Initial Testing seems ok..\n\n"\
+	"We're now going to test the basic functionality of Ironhide.\n"\
+	"After pressing OK, some gears should start rotating on your screen.\n"\
+	"They will run for five seconds, and will then prompt for the result."
+	
+	if [ -f $GLXGEARS ]; then
+		optirun $GLXGEARS &
+		x=wait_seconds
+		${x} 5
+		killall glxgears
+		x="question --width $WIDTH --height $HEIGHT"
+		${x} "Did some running gears show up??..\n\n"\
+		"If not, please do NOT continue and try another profile, or report this problem...:\n\n"\
+		"https://github.com/MrMEEE/ironhide/issues"
+
+		answer="${?}"
+		if [ ${answer} -eq 1 ]; then
+			exit 1
+		fi
+		
+		
+	else
+		x="question --width $WIDTH --height $HEIGHT"
+		${x} "We could't find glxgears on the system. Please install the mesa-utils package..\n\n"\
+		"Do you want to continue without completing the simple tests?? (not recommended)."
+
+		answer="${?}"
+		if [ ${answer} -eq 1 ]; then
+			exit 1
+		fi
+	fi
+else
+	# Add some more Error handling
+	x="message --width $WIDTH --height $HEIGHT"
+	${x} "Initial tests failed..\n\n"\
+	"Please do report this problem..:\n"\
+	"https://github.com/MrMEEE/ironhide/issues"
+fi
+
+
+if [[ $POWERSTATUS != "UNAVAILABLE" ]] ; then
+	echo $POWERON | xxd -r -p > /usr/local/bin/ironhide-enablecard
+	echo $POWEROFF | xxd -r -p > /usr/local/bin/ironhide-disablecard
+else
+	x="message --width $WIDTH --height $HEIGHT"
+	${x} "No power-on/off configuration has been reported for your machine,\n"\
+	"please manually enter configuration in:\n\n"\
+	"/usr/local/bin/ironhide-enablecard and /usr/local/bin/ironhide-disablecard\n\n"\
+	"Some examples are available in /usr/share/doc/ironhide/."
+
+	cp /usr/share/doc/ironhide/examples/ironhide-enablecard.template /usr/local/bin/ironhide-enablecard
+	cp /usr/share/doc/ironhide/examples/ironhide-disablecard.template /usr/local/bin/ironhide-disablecard
+
+fi
+
+chmod +x /usr/local/bin/ironhide*
+
+if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 0 ]; then
+	if [ -f /usr/local/bin/ironhide-disablecard ]; then
+		/usr/local/bin/ironhide-disablecard
+	fi  
+	if [ -f /usr/bin/ironhide-disablecard ]; then
+		/usr/bin/ironhide-disablecard
+	fi
+fi
+
+/etc/init.d/ironhide enable
+
+ERRORS=`cat /var/log/Xorg.\`echo $VGL_DISPLAY |cut -f2 -d:\`.log |grep EE |grep -v kbd |grep -v MIT-SCREEN-SAVER |grep -v "not implemented" | wc -l`
+
+/etc/init.d/ironhide disable
+
+if [[ $ERRORS == 0 ]];then
+	if [[ $POWERSTATUS != "UNAVAILABLE" ]]; then
+		x="message --width $WIDTH --height $HEIGHT"
+		${x} "Quick Testing of Ironhide with power management seems ok..\n\n"\
+		"After pressing OK, gears should again start rotating on your screen.\n"\
+		"They will run for five seconds, and will then prompt for the result."
+	
+		if [ -f $GLXGEARS ]; then
+			optirun $GLXGEARS &
+			x=wait_seconds
+			${x} 5
+			killall glxgears
+			x="question --width $WIDTH --height $HEIGHT"
+			${x} "Did some running gears show up??..\n\n"\
+			"If not, please do NOT continue and try another profile, or report this problem...:\n\n"\
+			"https://github.com/MrMEEE/ironhide/issues"
+
+			answer="${?}"
+			if [ ${answer} -eq 1 ]; then
+				  exit 1
+			fi
+		
+		
+		else
+			x="question --width $WIDTH --height $HEIGHT"
+			${x} "We could't find glxgears on the system. Please install the mesa-utils package..\n\n"\
+			"Do you want to continue without completing the power configuration tests?? (not recommended)."
+
+			answer="${?}"
+			if [ ${answer} -eq 1 ]; then
+				/usr/local/bin/ironhide-enablecard
+				cp /usr/share/doc/ironhide/examples/ironhide-enablecard.template /usr/local/bin/ironhide-enablecard
+				cp /usr/share/doc/ironhide/examples/ironhide-disablecard.template /usr/local/bin/ironhide-disablecard
+				#"We have replaced the"
+				exit 1
+			fi
+		fi
+	fi
+else
+	# Add some more Error handling
+	x="message --width $WIDTH --height $HEIGHT"
+	${x} "Power configuration tests failed..\n\n"\
+	"Please do report this problem..:\n"\
+	"https://github.com/MrMEEE/ironhide/issues"
+fi
+
+
+update-rc.d ironhide defaults
+
 
 #
 #	Set userrights

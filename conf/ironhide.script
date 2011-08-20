@@ -97,8 +97,11 @@ do_start()
 		log_daemon_msg "Unsafe pidfile '$PIDFILE' - cannot check the availability of display $VGL_DISPLAY"
 		return 2
 	fi
-
-	$ENABLECARD
+	if [ -f $ENABLECARD ]; then
+		$ENABLECARD
+	else    
+		echo "Ironhide hasn't been configured for power management, please run ironhide-configuration."
+	fi 
 	# XXX: should there be a check if the card has become ready?
 
 	# 1: the X server
@@ -152,7 +155,11 @@ do_stop()
 	fi
 	# RETVAL 2 = still running
 	[ $RETVAL = 2 ] && return 2
-	$DISABLECARD
+	if [ -f $DISABLECARD ]; then
+		$DISABLECARD
+	else
+		echo "Ironhide hasn't been configured for power management, please run ironhide-configuration."
+	fi
 	return $RETVAL
 }
 
