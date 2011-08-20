@@ -1,8 +1,28 @@
-This will contain a cleaned, Ubuntu only, version of bumblebee.. Now called
-Ironhide.. name change mostly to due to the fork away from "The Bumblebee
-Project"
-
 Based on the knowledge I've gathered in the last few months..
 
 The code from here should not be used directly, but will be published
 through a ppa only...
+
+I have released the first version of Ironhide, which is going to be my
+branch of bumblebee..
+
+This version features:
+
+* Graphical User Interface for Configuration and Submitsystem.
+* Tests build into the Configuration, should help us narrow down problems.
+* Major cleanup, removed all content not related to Ubuntu.
+* Updated VirtualGL.
+
+For now there is only natty packages available.
+
+https://launchpad.net/~mj-casalogic/+archive/ironhide/
+
+Installation notes:
+
+I have given up on supporting the nvidia packages myself.. The version in
+Natty works just fine, and if you want newer versions, I can confirm that
+the X-org edgers repository works great with Ironhide:
+
+https://launchpad.net/~xorg-edgers/+archive/ppa
+
+When new versions come out, just rerun the configuration. 
