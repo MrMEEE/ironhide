@@ -235,6 +235,7 @@ while [ "$CONFIGMODE" != "MANUAL" ] && [ "$CONFIGMODE" != "DONE" ] ; do
 				exit 0
 			elif [[ $choice == 9997 ]] ; then
 				CONFIGMODE=MANUAL
+				POWERSTATUS="UNAVAILABLE"
 			else
 				CONFIGMODE=AUTO
 				MANUFACTURER=`cat $DATAFOLDER/machineinfo |sed -n \`echo $choice\`p|cut -f1 -d\|`
