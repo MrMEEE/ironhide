@@ -1,22 +1,40 @@
 <?php
-
+/**
+ * XXX: check which characters are allowed!
+ * - fix data containing pipes (|) from breaking the output of search=showall
+ */
 require "connect.php";
 
 if(isset($_GET["addmachine"])){
-    $manufacturer=$_GET["manufacturer"];
-    $model=$_GET["model"];
-    $start=$_GET["start"];
-    $shutdown=$_GET["shutdown"];
+    $manufacturer = filter_input(INPUT_GET, "manufacturer");
+    $model = filter_input(INPUT_GET, "model");
+    $start = filter_input(INPUT_GET, "start");
+    $shutdown = filter_input(INPUT_GET, "shutdown");
     if($start==""){
      $start="UNAVAILABLE";
      $shutdown="UNAVAILABLE";
     }
-    $user=$_GET["user"];
-    $distro=$_GET["distro"];
-    $query = mysql_query("SELECT * from confirmed WHERE Manufacturer='$manufacturer' AND Model='$model' AND `nVidia Startup`='$start' AND `nVidia Shutdown`='$shutdown'");
+    $user = filter_input(INPUT_GET, "user");
+    $distro = filter_input(INPUT_GET, "distro");
+    // if the host allows it, use MySQLi + prepared statements
+    $sql = sprintf('SELECT * from confirmed
+        WHERE Manufacturer="%s" AND Model="%s" AND `nVidia Startup`="%s" AND `nVidia Shutdown`="%s"',
+        mysql_real_escape_string($manufacturer), mysql_real_escape_string($model),
+        mysql_real_escape_string($shutdown));
+    $query = mysql_query($sql);
     
-    if($manufacturer!=""&&$model!=""&&$monitor!=""&&$nvidiabusid!=""&&$dmiproduct!=""&&$user!=""&&$monitor!="REPLACEWITHCONNECTEDMONITOR"&&$model!="\$MODEL"){
-        mysql_query("INSERT into confirmed (`Manufacturer`, `Model`, `nVidia BusID`, `nVidia Startup`, `nVidia Shutdown`, `Confirming User`, `Users Confirming`, `Distribution`) VALUES ('$manufacturer', '$model', '$monitor', '$intelbusid', '$nvidiabusid', '$start', '$shutdown', '$dmiproduct', '$user', '$distro')");
+    if($manufacturer!=""&&$model!=""&&$monitor!=""&&$nvidiabusid!=""&&$dmiproduct!=""&&
+    $user!=""&&$monitor!="REPLACEWITHCONNECTEDMONITOR"&&$model!='$MODEL'){
+        $sql = sprintf('INSERT into confirmed(Manufacturer, Model, `nVidia BusID`, `nVidia Startup`,
+            `nVidia Shutdown`, `Confirming User`, `Users Confirming`, Distribution) VALUES
+            ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")',
+            mysql_real_escape_string($manufacturer), mysql_real_escape_string($model),
+            mysql_real_escape_string($monitor), mysql_real_escape_string($intelbusid),
+            mysql_real_escape_string($nvidiabusid), mysql_real_escape_string($start),
+            mysql_real_escape_string($shutdown), mysql_real_escape_string($dmiproduct),
+            mysql_real_escape_string($user), mysql_real_escape_string($distro)
+        );
+        mysql_query($sql);
         echo "System Added";
     }
     $row = mysql_fetch_assoc($query);
@@ -24,24 +42,33 @@ if(isset($_GET["addmachine"])){
      $id = $row['id'];
      $confirmed = $row['Users Confirming'];
      $confirmed += 1;
+     // acceptable since $confirmed and $id are both numbers
      mysql_query("UPDATE `confirmed` SET `Users Confirming`=$confirmed WHERE id=$id");
      echo "System Added to already existing profile";
     }
     else{
      if($manufacturer!=""&&$model!=""&&$user!=""&&$user!=$row['Confirming User']){
-      mysql_query("INSERT into confirmed (`Manufacturer`, `Model`, `nVidia Startup`, `nVidia Shutdown`, `Submitting User`, `Users Confirming`, `Distribution`) VALUES ('$manufacturer', '$model', '$start', '$shutdown', '$user', '1', '$distro')");
+      $sql = sprintf('INSERT into confirmed (Manufacturer, Model, `nVidia Startup`,
+        `nVidia Shutdown`, `Submitting User`, `Users Confirming`, Distribution) VALUES
+        ("%s", "%s", "%s", "%s", "%s", 1, "%s")',
+        mysql_real_escape_string($manufacturer), mysql_real_escape_string($model),
+        mysql_real_escape_string($start), mysql_real_escape_string($shutdown),
+        mysql_real_escape_string($user), mysql_real_escape_string($distro)
+        );
+      mysql_query($sql);
       echo "System Added";
      }
     }
 }
-
-
-if(isset($_GET["search"])){
-  $searchitem=$_GET["searchitem"];
+else if(isset($_GET["search"])){ // addmachine should not be combined with search
+    // do not render the output as HTML
+    header('Content-Type: text/plain');
+  $searchitem = filter_input(INPUT_GET, 'searchitem');
   if($searchitem=="showall")
   $query = mysql_query("SELECT * FROM `confirmed` ORDER by Manufacturer");
   else
-  $query = mysql_query("SELECT * FROM `confirmed` WHERE `Model` = '$searchitem'");
+  $query = mysql_query(sprintf("SELECT * FROM confirmed WHERE Model = '%s'",
+    mysql_real_escape_string($searchitem)));
 
 while($row = mysql_fetch_assoc($query)){
     echo $row['Manufacturer'];
@@ -86,10 +113,10 @@ echo "<tbody>";
 while($row = mysql_fetch_assoc($query)){
     echo "<tr>";
     echo "<td>";
-    echo $row['Manufacturer'];
+    echo htmlspecialchars($row['Manufacturer']);
     echo "</td>";
     echo "<td>";
-    echo $row['Model'];
+    echo htmlspecialchars($row['Model']);
     echo "</td>";
     if ($row['nVidia Startup'] != "UNAVAILABLE"){
      echo "<td>Available</td>";
@@ -106,13 +133,13 @@ while($row = mysql_fetch_assoc($query)){
      echo "<td>Unavailable</td>";
     }
     echo "<td>";
-    echo $row['Submitting User'];
+    echo htmlspecialchars($row['Submitting User']);
     echo "</td>";
     echo "<td>";
-    echo $row['Users Confirming'];
+    echo htmlspecialchars($row['Users Confirming']);
     echo "</td>";
     echo "<td>";
-    echo $row['Distribution'];
+    echo htmlspecialchars($row['Distribution']);
     echo "</td>";
     echo "</tr>";
 }
