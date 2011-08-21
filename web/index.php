@@ -20,7 +20,7 @@ if(isset($_GET["addmachine"])){
     $sql = sprintf('SELECT * from confirmed
         WHERE Manufacturer="%s" AND Model="%s" AND `nVidia Startup`="%s" AND `nVidia Shutdown`="%s"',
         mysql_real_escape_string($manufacturer), mysql_real_escape_string($model),
-        mysql_real_escape_string($shutdown));
+        mysql_real_escape_string($start), mysql_real_escape_string($shutdown));
     $query = mysql_query($sql);
     
     if($manufacturer!=""&&$model!=""&&$monitor!=""&&$nvidiabusid!=""&&$dmiproduct!=""&&
