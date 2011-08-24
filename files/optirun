@@ -43,9 +43,8 @@
 source /etc/default/ironhide
 VGL_DRIVER="/usr/lib/nvidia-current"
 NVIDIABUSID=`grep BusID /etc/X11/xorg.conf.nvidia | sed -e "s/[ \t]*BusID[ \t]*\"\(.*\)\"/\1/g" |cut -d: -f2,3`
+DELAY=1 # Time to let applications settle, before trying to shutdown the nvidia card..
 
-#READ ARGUMENTS
-#echo "$*"
 while :; do
 	case "$1" in
 	  -f)
@@ -96,12 +95,6 @@ while :; do
 	shift
 done
 
-#echo "Arguments for the application: $*"
-#echo "Eco mode:" $ECO_MODE
-#echo "32 bits mode:" $lib32_mode
-#echo "Compression mode:" $VGL_COMPRESS
-#echo "Display:" $VGL_DISPLAY
-
 # if executed from a symlink named optirun32, use the 32b path if exist
 if [ "${0##*/}" = "optirun32" -a -d /usr/lib32/nvidia-current ]; then
 	VGL_DRIVER=/usr/lib32/nvidia-current
@@ -148,14 +141,10 @@ optirun_launcher() {
 	export VGL_LOG
 	######MODIFICATION######Replace : /usr/lib/nvidia-current with $VGL_DRIVER
 	vglrun -c $VGL_COMPRESS -d $VGL_DISPLAY -ld "$VGL_DRIVER" "$@"
-#	sleep 3
+	sleep $DELAY
 	if [ "$STOP_SERVICE_ON_EXIT" != "NO" ]; then
 		OPTIRUNS="/usr/bin/optirun /usr/bin/optirun32 /usr/bin/optirun64"
 		while :; do
-			# there is a space separating PIDs if multiple optirun instances are running
-			#if pidof -x $OPTIRUNS | grep -q ' '; then
-			#	show_msg
-			#	exit 0
 			if [[ `lsof -n -w /usr/lib*/nvidia-current/libnvidia-glcore.so* | wc -l` > 0 ]]; then
 				show_msg
 				sleep 1
@@ -166,13 +155,6 @@ optirun_launcher() {
 		if ! lspci -v -s $NVIDIABUSID | grep -q !; then
 			sudo /etc/init.d/ironhide disable
 		fi
-		# BAD idea, do not disable the card if X is running! Trust me. Better
-		# keep it running than breaking the system.
-		#if ! lspci -v -s $NVIDIABUSID | -1 grep !; then
-		#	if [ -x /usr/local/bin/ironhide-disablecard ]; then
-		#		sudo /usr/local/bin/ironhide-disablecard
-		#	fi
-		#fi
 	fi
 
 }
