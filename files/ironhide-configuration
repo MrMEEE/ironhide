@@ -29,6 +29,7 @@
 # Definitions
 ARCH=`uname -m`
 CONFIGURATIONFILE=/etc/default/ironhide
+LOCALECONFIGFILE=.ironhide
 DATAFOLDER=/usr/share/ironhide/data/
 LASTUPDATE=`stat -c %y $DATAFOLDER/allmachineinfo | cut -d ' ' -f1`
 HEIGHT=500
@@ -49,6 +50,10 @@ GLXGEARS=`which glxgears`
 # INCLUDES
 source easybashgui
 source $CONFIGURATIONFILE
+if [ -f ~/$LOCALECONFIGFILE ];then
+	source ~/$LOCALECONFIGFILE
+fi
+        
 
 # DEBUG? Comment Out...
 exec 6>&2 ; exec 2> /dev/null
@@ -415,6 +420,11 @@ case "$choice" in
 	;;
 esac
 
+if [ -f ~/$LOCALECONFIGFILE ];then
+	sed -i 's/VGL_COMPRESS.*/VGL_COMPRESS='$IMAGETRANSPORT'/' ~/$LOCALECONFIGFILE
+fi
+
+chown $SUDO_USER:$SUDO_USER ~/$LOCALECONFIGFILE
 sed -i 's/VGL_COMPRESS.*/VGL_COMPRESS='$IMAGETRANSPORT'/' $CONFIGURATIONFILE
 
 if [ -f /usr/local/bin/ironhide-enablecard ] ; then
@@ -581,5 +591,10 @@ ${x} "Ironhide is now configured.\n\n"\
 "If you have any problems, please run ironhide-bugreport\n\n"\
 "Have fun...."
 
-sudo sed -i "s/IRONHIDE_CONFIGURED=.*/IRONHIDE_CONFIGURED=1/g" $CONFIGURATIONFILE
+if [ -f ~/$LOCALECONFIGFILE ];then
+	sed -i "s/IRONHIDE_CONFIGURED=.*/IRONHIDE_CONFIGURED=1/g" ~/$LOCALECONFIGFILE
+fi
+
+sed -i "s/IRONHIDE_CONFIGURED=.*/IRONHIDE_CONFIGURED=1/g" $CONFIGURATIONFILE
+chown $SUDO_USER:$SUDO_USER ~/$LOCALECONFIGFILE
 

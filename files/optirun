@@ -39,11 +39,17 @@
 # -d <display_value> : -d must be followed by :0, :1 or :2 argument (See the VGL doc)
 ### END COMMENT
 
+LOCALECONFIGFILE=.ironhide
+
 #DEFAULT VALUE
-source /etc/default/ironhide
 VGL_DRIVER="/usr/lib/nvidia-current"
 NVIDIABUSID=`grep BusID /etc/X11/xorg.conf.nvidia | sed -e "s/[ \t]*BusID[ \t]*\"\(.*\)\"/\1/g" |cut -d: -f2,3`
 DELAY=1 # Time to let applications settle, before trying to shutdown the nvidia card..
+
+source /etc/default/ironhide
+if [ -f ~/$LOCALECONFIGFILE ];then
+	source ~/$LOCALECONFIGFILE
+fi
 
 while :; do
 	case "$1" in
