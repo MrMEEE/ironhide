@@ -1,0 +1,240 @@
+#!/bin/bash
+
+#
+# ----------------------------------------------------------------------------
+# "THE BEER-WARE LICENSE" (Revision 42):
+# <mj@casalogic.dk> wrote this file. As long as you retain this notice you
+# can do whatever you want with this stuff. If we meet some day, and you think
+# this stuff is worth it, you can buy me a beer in return Martin Juhl
+# ----------------------------------------------------------------------------
+#
+
+#    This file is part of ironhide.
+#
+#    ironhide is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    ironhide is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with ironhide.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Definitions
+LOCALECONFIGFILE=.ironhide
+ROOT_UID=0
+CONFIGURATIONFILE=/etc/default/ironhide
+BUGREPORTHOST=www.martin-juhl.dk
+PIPE=/tmp/pipe
+HEIGHT=500
+WIDTH=700
+
+# Includes
+source easybashgui
+source $CONFIGURATIONFILE
+if [ -f ~/$LOCALECONFIGFILE ];then
+	source ~/$LOCALECONFIGFILE
+fi
+
+# Program Paths
+LSPCI=`which lspci`
+WGET=`which wget`
+LSMOD=`which lsmod`
+WHOAMI=`which whoami`
+
+VGL_DISPLAY=`echo $VGL_DISPLAY | cut -f2 -d:`
+
+# DEBUG? Comment Out...
+exec 6>&2 ; exec 2> /dev/null
+
+if [[ "$HOME" == "/root" ]]; then
+	echo "Do NOT run ironhide-configuration as the root user.."
+	echo "Please use sudo, gksudo, kdesudo or similiar."
+	exit 0
+fi
+
+if [[ "`$WHOAMI`" != "root" ]]; then 
+	x="alert_message --height $HEIGHT --width $WIDTH"
+	${x} "ironhide-configuration has been run without root priviledges and can't continue..\nPlease run with sudo, gksudo, kdesudo or similiar."
+	exit 1
+fi
+
+rm -rf "/tmp/index.google"
+$WGET -q --tries=10 --timeout=5 http://www.google.com -O /tmp/index.google &> /dev/null
+if [ ! -s /tmp/index.google ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+        ${x} "You are not connected to the Internet, and wont be able to submit bugreports.\n" \
+	"please rerun while connected to the internet."
+	exit 1
+fi
+
+x="message --width $WIDTH --height $HEIGHT"
+${x} "Welcome to the Ironhide bugreport tool.."
+
+x="input -w $WIDTH -h $HEIGHT 1"
+${x} "Please enter your name."
+username="$(0< "${dir_tmp}/${file_tmp}" )"
+
+x="message --width $WIDTH --height $HEIGHT"
+${x} "Next you will be asked to enter your Github issue number.\n"\
+"If you haven't already, please go to: https://github.com/MrMEEE/ironhide/issues\n"\
+"And create an issue.."
+
+x="input -w $WIDTH -h $HEIGHT 1"
+${x} "Enter Github issue number"
+github_id="$(0< "${dir_tmp}/${file_tmp}" )"
+
+nvidia_log=`cat /var/log/Xorg.$VGL_DISPLAY.log > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+xorg_conf=`cat /etc/X11/xorg.conf > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+xorg_conf_nvidia=`cat /etc/X11/xorg.conf.nvidia > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+lspci=`$LSPCI > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+libraries=`echo "\`ls -la /usr/lib32/nvidia-current\` \`ls -la /usr/lib/xorg/\` \`ls -la /usr/lib/nvidia-current\`" > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+modules=`$LSMOD > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+alternatives=`echo "\`ls -la /etc/alternatives/\`" > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+if [ -f /usr/local/bin/ironhide-enablecard ]; then
+	enablescript=`cat /usr/local/bin/ironhide-enablecard > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+else
+	enablescript=`echo "Does not exist!" > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+fi
+if [ -f /usr/local/bin/ironhide-disablecard ]; then
+	disablescript=`cat /usr/local/bin/ironhide-disablecard > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+else
+	disablescript=`echo "Does not exist!" > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+fi
+
+echo "Ironhide Bug Report" >> /tmp/ironhide-report
+echo >> /tmp/ironhide-report
+date >> /tmp/ironhide-report
+echo >> /tmp/ironhide-report
+
+echo `cat /etc/ironhide` >> /tmp/ironhide-report
+echo >> /tmp/ironhide-report
+
+echo `cat /etc/issue` >> /tmp/ironhide-report
+
+echo "uname -a info" >> /tmp/ironhide-report
+echo >> /tmp/ironhide-report
+uname -a >> /tmp/ironhide-report
+echo >> /tmp/ironhide-report
+
+echo "ps aux info" >> /tmp/ironhide-report
+ps aux |grep X >> /tmp/ironhide-report
+echo >> /tmp/ironhide-report
+ 
+echo >> /tmp/ironhide-report
+echo "/etc/default/ironhide" >> /tmp/ironhide-report
+echo >> /tmp/ironhide-report
+cat /etc/default/ironhide >> /tmp/ironhide-report
+
+echo >> /tmp/ironhide-report
+echo "~/$LOCALECONFIGFILE" >> /tmp/ironhide-report
+echo >> /tmp/ironhide-report
+cat ~/$LOCALECONFIGFILE >> /tmp/ironhide-report
+
+echo >> /tmp/ironhide-report
+echo "dmidecode" >> /tmp/ironhide-report
+echo >> /tmp/ironhide-report
+dmidecode --string baseboard-manufacturer >> /tmp/ironhide-report
+dmidecode --string baseboard-product-name >> /tmp/ironhide-report
+dmidecode --string system-manufacturer >> /tmp/ironhide-report
+dmidecode --string system-product-name >> /tmp/ironhide-report
+
+system_info=`cat /tmp/ironhide-report > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+
+x="progress -w 600"
+
+if [[ -p $PIPE ]]; then
+    rm $PIPE
+fi
+
+mkfifo $PIPE
+
+tail -f $PIPE | ${x} "Uploading bugreport!!!" &
+echo 0 >> $PIPE
+
+wget -O /tmp/bugreportsubmitted "http://$BUGREPORTHOST/bugweb/?createreport=1&github_id=$github_id" 1>/dev/null 2>/dev/null
+
+
+if [ `cat /tmp/bugreportsubmitted | grep "New ID is" |wc -l` -gt 0 ];then
+	reportid=`cat /tmp/bugreportsubmitted |grep "New ID is" |cut -f2 -d: | sed -e ':a;N;$!ba;s/\n//g'`
+	echo 9 >> $PIPE
+else
+	echo 100 >> $PIPE
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to create bugreport.. please report this..."
+	exit 1
+fi
+curl -o /tmp/bugreportsubmitted -d "updatereport=$reportid&update=username&value=$username" http://$BUGREPORTHOST/bugweb/ 1>/dev/null 2>/dev/null
+if [ `cat /tmp/bugreportsubmitted | grep "Bug Report Updated" |wc -l` -eq 0 ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to upload Username, upload will continue.. please report this..."
+fi
+echo 18 >> $PIPE
+curl -o /tmp/bugreportsubmitted -d "updatereport=$reportid&update=nvidia_log&value=$nvidia_log" http://$BUGREPORTHOST/bugweb/ 1>/dev/null 2>/dev/null
+if [ `cat /tmp/bugreportsubmitted | grep "Bug Report Updated" |wc -l` -eq 0 ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to upload nVidia log file, upload will continue.. please report this..."
+fi
+echo 27 >> $PIPE
+curl -o /tmp/bugreportsubmitted -d "updatereport=$reportid&update=xorg_conf&value=$xorg_conf" http://$BUGREPORTHOST/bugweb/ 1>/dev/null 2>/dev/null
+if [ `cat /tmp/bugreportsubmitted | grep "Bug Report Updated" |wc -l` -eq 0 ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to upload xorg.conf, upload will continue.. please report this..."
+fi
+echo 36 >> $PIPE
+curl -o /tmp/bugreportsubmitted -d "updatereport=$reportid&update=xorg_conf_nvidia&value=$xorg_conf_nvidia" http://$BUGREPORTHOST/bugweb/ 1>/dev/null 2>/dev/null
+if [ `cat /tmp/bugreportsubmitted | grep "Bug Report Updated" |wc -l` -eq 0 ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to upload xorg.conf.nvidia, upload will continue.. please report this..."
+fi
+echo 45 >> $PIPE
+curl -o /tmp/bugreportsubmitted -d "updatereport=$reportid&update=system_info&value=$system_info" http://$BUGREPORTHOST/bugweb/ 1>/dev/null 2>/dev/null
+if [ `cat /tmp/bugreportsubmitted | grep "Bug Report Updated" |wc -l` -eq 0 ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to upload System Info, upload will continue.. please report this..."
+fi
+echo 54 >> $PIPE
+curl -o /tmp/bugreportsubmitted -d "updatereport=$reportid&update=lspci&value=$lspci" http://$BUGREPORTHOST/bugweb/ 1>/dev/null 2>/dev/null
+if [ `cat /tmp/bugreportsubmitted | grep "Bug Report Updated" |wc -l` -eq 0 ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to upload PCI Info, upload will continue.. please report this..."
+fi
+echo 63 >> $PIPE
+curl -o /tmp/bugreportsubmitted -d "updatereport=$reportid&update=libraries&value=$libraries" http://$BUGREPORTHOST/bugweb/ 1>/dev/null 2>/dev/null
+if [ `cat /tmp/bugreportsubmitted | grep "Bug Report Updated" |wc -l` -eq 0 ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to upload Library Information, upload will continue.. please report this..."
+fi
+echo 72 >> $PIPE
+curl -o /tmp/bugreportsubmitted -d "updatereport=$reportid&update=modules&value=$modules" http://$BUGREPORTHOST/bugweb/ 1>/dev/null 2>/dev/null
+if [ `cat /tmp/bugreportsubmitted | grep "Bug Report Updated" |wc -l` -eq 0 ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to upload Module Information, upload will continue.. please report this..."
+fi
+echo 81 >> $PIPE
+curl -o /tmp/bugreportsubmitted -d "updatereport=$reportid&update=alternatives&value=$alternatives" http://$BUGREPORTHOST/bugweb/ 1>/dev/null 2>/dev/null
+if [ `cat /tmp/bugreportsubmitted | grep "Bug Report Updated" |wc -l` -eq 0 ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to upload Info of Alternatives, upload will continue.. please report this..."
+fi
+echo 90 >> $PIPE
+curl -o /tmp/bugreportsubmitted -d "updatereport=$reportid&update=enablescript&value=$enablescript" http://$BUGREPORTHOST/bugweb/ 1>/dev/null 2>/dev/null
+if [ `cat /tmp/bugreportsubmitted | grep "Bug Report Updated" |wc -l` -eq 0 ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to upload the Enable Script, upload will continue.. please report this..."
+fi
+echo 96 >> $PIPE
+curl -o /tmp/bugreportsubmitted -d "updatereport=$reportid&update=disablescript&value=$disablescript" http://$BUGREPORTHOST/bugweb/ 1>/dev/null 2>/dev/null
+if [ `cat /tmp/bugreportsubmitted | grep "Bug Report Updated" |wc -l` -eq 0 ];then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Failed to upload the Disable Script, upload will continue.. please report this..."
+fi
+echo 100 >> $PIPE
+
+x="message --width $WIDTH --height $HEIGHT"
+${x} "Bug Report submitted succesfully. Thanks."
