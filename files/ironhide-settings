@@ -1,0 +1,212 @@
+#!/bin/bash
+
+# Definitions
+CONFIGURATIONFILE=/etc/default/ironhide
+LOCALECONFIGFILE=.ironhiderc
+STATUS=NONE
+HEIGHT=500
+WIDTH=700
+
+# Includes
+source easybashgui
+
+# DEBUG? Comment Out...
+exec 6>&2 ; exec 2> /dev/null
+
+LIB_CHECK="$(type "easybashgui" 2> /dev/null )"
+[ ${#LIB_CHECK} -eq 0 ] && echo -e "\n\n\n\nYou need to copy \"easybashgui\" in your path\n\n\n\n" 1>&2 && exit 1
+
+if [ ! -f ~/$LOCALECONFIGFILE  ]; then
+	touch ~/$LOCALECONFIGFILE
+fi
+
+x="message -w $WIDTH -h $HEIGHT"
+${x} "Welcome to the Ironhide settings utility, please choose the setting you want to change."
+
+while [[ $STATUS != DONE ]]; do
+
+source $CONFIGURATIONFILE
+if [ -f ~/$LOCALECONFIGFILE  ]; then
+	source ~/$LOCALECONFIGFILE
+fi
+
+if [[ $ECO_MODE == "0" ]]; then
+	ECO_MODE=NO
+else
+	ECO_MODE=YES
+fi
+
+x="menu -w $WIDTH -h $HEIGHT"
+${x} "Automatic Shutdown of nVidia Card: $STOP_SERVICE_ON_EXIT" "Virtual Terminal: $VGL_DISPLAY" "Image Transport: $VGL_COMPRESS" "Read Back Mode: $VGL_READBACK" "Log File for VirtualGL: $VGL_LOG" "Powersave/Economic Mode: $ECO_MODE" "nVidia settings" "Done"
+
+choice="$(0< "${dir_tmp}/${file_tmp}" )"
+
+case "$choice" in
+	"Automatic Shutdown of nVidia Card"*)
+	x="question --width $WIDTH --height $HEIGHT"
+	${x} "Do you want Ironhide to automatically shutdown the nVidia X-server\n"\
+	"and the nVidia (if power-scripts are available), when the nVidia card is not in use??"
+	answer="${?}"
+
+	if [ ${answer} -eq 1 ]; then
+        	STOP_SERVICE_ON_EXIT=NO
+        else
+	        STOP_SERVICE_ON_EXIT=YES
+        fi
+
+        if [[ `cat ~/$LOCALECONFIGFILE |grep STOP_SERVICE_ON_EXIT |wc -l` > 0 ]]; then
+                sed -i 's/STOP_SERVICE_ON_EXIT.*/STOP_SERVICE_ON_EXIT='$STOP_SERVICE_ON_EXIT'/' ~/$LOCALECONFIGFILE
+        else
+                echo "" >> ~/$LOCALECONFIGFILE
+		echo "# STOP_SERVICE_ON_EXIT YES|NO" >> ~/$LOCALECONFIGFILE
+		echo "# Should ironhide service be stopped after last vgl program is finished?" >> ~/$LOCALECONFIGFILE
+		echo "# Defaults to yes." >> ~/$LOCALECONFIGFILE
+		echo "STOP_SERVICE_ON_EXIT=$STOP_SERVICE_ON_EXIT" >> ~/$LOCALECONFIGFILE
+                echo "" >> ~/$LOCALECONFIGFILE
+        fi
+
+        ;;
+	"Virtual Terminal"*)
+	x="message --width $WIDTH --height $HEIGHT"
+	${x} "Please input the Virtual Terminal on which the nVidia X-server should run\n"\
+	"If in doubt, choose :8"
+	x="input --width $WIDTH --height $HEIGHT 1"
+	${x} ":8"
+	VGL_DISPLAY="$(0< "${dir_tmp}/${file_tmp}" )"
+
+        if [[ `cat ~/$LOCALECONFIGFILE |grep VGL_DISPLAY |wc -l` > 0 ]]; then
+                sed -i 's/VGL_DISPLAY.*/VGL_DISPLAY='$VGL_DISPLAY'/' ~/$LOCALECONFIGFILE
+        else
+                echo "" >> ~/$LOCALECONFIGFILE
+		echo "# Display for the nVidia X Server, choose a higher display (e.g. :5) if you" >> ~/$LOCALECONFIGFILE
+		echo "# use Fast User Switching which starts incrementing from :0 (:0, :1, :2, ...)" >> ~/$LOCALECONFIGFILE
+		echo "VGL_DISPLAY=$VGL_DISPLAY" >> ~/$LOCALECONFIGFILE
+                echo "" >> ~/$LOCALECONFIGFILE
+        fi
+
+        ;;
+	"Image Transport"*)
+	x="message --width $WIDTH --height $HEIGHT"
+	${x} "The Image Transport is how the images are transferred from the\n"\
+	"nVidia card to the Intel card, people has different experiences of\n"\
+	"performance, but just select the default if you are in doubt.\n\n"\
+	"I recently discovered that yuv and jpeg both has some lagging\n"\
+	"this is only noticable in fast moving games, such as 1st person\n"\
+	"shooters and for me, its only good enough with xv, even though\n"\
+	"xv brings down performance a little."
+	x="menu -w $WIDTH -h $HEIGHT"
+	${x} "YUV" "JPEG" "PROXY" "XV (Default)" "RGB"
+
+	choice="$(0< "${dir_tmp}/${file_tmp}" )"
+	case "$choice" in
+		"YUV")
+        		IMAGETRANSPORT="yuv"
+        	;;
+		"JPEG")
+		        IMAGETRANSPORT="jpeg"
+       		;;
+		"PROXY")
+        		IMAGETRANSPORT="proxy"
+        	;;
+		"XV (Default)")
+		        IMAGETRANSPORT="xv"
+	        ;;
+		"RGB")
+		        IMAGETRANSPORT="rgb"
+        		;;
+		*)
+		        IMAGETRANSPORT="xv"
+	        ;;
+	esac
+	if [[ `cat ~/$LOCALECONFIGFILE |grep VGL_COMPRESS |wc -l` > 0 ]]; then
+		sed -i 's/VGL_COMPRESS.*/VGL_COMPRESS='$IMAGETRANSPORT'/' ~/$LOCALECONFIGFILE
+	else
+		echo "" >> ~/$LOCALECONFIGFILE
+		echo "# Image transport" >> ~/$LOCALECONFIGFILE
+		echo "# proxy, jpeg, rgb, xv or yuv" >> ~/$LOCALECONFIGFILE
+		echo "VGL_COMPRESS=$IMAGETRANSPORT" >> ~/$LOCALECONFIGFILE
+		echo "" >> ~/$LOCALECONFIGFILE
+	fi
+        ;;
+	"Read Back Mode"*)
+	x="message --width $WIDTH --height $HEIGHT"
+	${x} "The Read Back Mode should primarely be kept at fbo, as it gives better\n"\
+	"Performance. But if you're having problems, try one of the others."
+	x="menu -w $WIDTH -h $HEIGHT"
+        ${x} "fbo (Default)" "none" "sync"
+
+	choice="$(0< "${dir_tmp}/${file_tmp}" )"
+        case "$choice" in
+                "fbo (Default)")
+                        VGL_READBACK="fbo"
+                ;;
+                "none")
+                        VGL_READBACK="none"
+                ;;
+                "sync")
+                        VGL_READBACK="sync"
+                ;;
+	esac
+
+	if [[ `cat ~/$LOCALECONFIGFILE |grep VGL_READBACK |wc -l` > 0 ]]; then
+                sed -i 's/VGL_READBACK.*/VGL_READBACK='$VGL_READBACK'/' ~/$LOCALECONFIGFILE
+        else
+                echo "" >> ~/$LOCALECONFIGFILE
+                echo "# Readback mode" >> ~/$LOCALECONFIGFILE
+		echo "# none, pbo, sync" >> ~/$LOCALECONFIGFILE
+		echo "VGL_READBACK=$VGL_READBACK" >> ~/$LOCALECONFIGFILE
+                echo "" >> ~/$LOCALECONFIGFILE
+        fi
+
+        ;;
+	"Log File for VirtualGL"*)
+	x="message --width $WIDTH --height $HEIGHT"
+	${x} "Please define the path where VirtualGL should put its log file\n"\
+	"use \"/dev/null\" for better performance and no log."
+	x="input --width $WIDTH --height $HEIGHT 1"
+	${x} "/dev/null"
+	VGL_LOG="$(0< "${dir_tmp}/${file_tmp}" )"
+	if [[ `cat ~/$LOCALECONFIGFILE |grep VGL_LOG |wc -l` > 0 ]]; then
+		sed -i 's$VGL_LOG.*$VGL_LOG='$VGL_LOG'$' ~/$LOCALECONFIGFILE
+        else
+                echo "" >> ~/$LOCALECONFIGFILE
+		echo "# VGL log" >> ~/$LOCALECONFIGFILE
+		echo "VGL_LOG=$VGL_LOG" >> ~/$LOCALECONFIGFILE
+                echo "" >> ~/$LOCALECONFIGFILE
+        fi
+        ;;
+	"Powersave/Economic Mode"*)
+	x="question --width $WIDTH --height $HEIGHT"
+        ${x} "Do you want Ironhide to automatically switch off when on battery power???"
+        answer="${?}"
+
+        if [ ${answer} -eq 1 ]; then
+                ECO_MODE=0
+        else
+                ECO_MODE=1
+        fi
+
+        if [[ `cat ~/$LOCALECONFIGFILE |grep ECO_MODE |wc -l` > 0 ]]; then
+                sed -i 's/ECO_MODE.*/ECO_MODE='$ECO_MODE'/' ~/$LOCALECONFIGFILE
+        else
+                echo "" >> ~/$LOCALECONFIGFILE
+		echo "# ECO Mode" >> ~/$LOCALECONFIGFILE
+		echo "# 1 :   ECO mode active, do not run ironhide on battery power" >> ~/$LOCALECONFIGFILE
+		echo "# 0 :   ECO mode disabled" >> ~/$LOCALECONFIGFILE
+		echo "ECO_MODE=$ECO_MODE" >> ~/$LOCALECONFIGFILE
+                echo "" >> ~/$LOCALECONFIGFILE
+        fi
+	;;
+	"nVidia settings"*)
+	        
+	optirun nvidia-settings -c $VGL_DISPLAY
+	;;
+	"Done"|*)
+		STATUS=DONE
+        ;;
+esac
+
+
+
+done
+

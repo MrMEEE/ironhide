@@ -399,6 +399,8 @@ ${x} "The Image Transport is how the images are transferred from the\n"\
 x="menu -w $WIDTH -h $HEIGHT"
 ${x} "YUV" "JPEG" "PROXY" "XV (Default)" "RGB"
 
+choice="$(0< "${dir_tmp}/${file_tmp}" )"
+
 case "$choice" in
 "YUV")
 	IMAGETRANSPORT="yuv"
@@ -455,7 +457,7 @@ if [[ $ERRORS == 0 ]]; then
 	"After pressing OK, some gears should start rotating on your screen.\n"\
 	"They will run for five seconds, and will then prompt for the result."
 	
-	if [ -f $GLXGEARS ]; then
+	if [[ $GLXGEARS != "" ]]; then
 		optirun $GLXGEARS &
 		x=wait_seconds
 		${x} 5
@@ -469,8 +471,7 @@ if [[ $ERRORS == 0 ]]; then
 		if [ ${answer} -eq 1 ]; then
 			exit 1
 		fi
-		
-		
+				
 	else
 		x="question --width $WIDTH --height $HEIGHT"
 		${x} "We could't find glxgears on the system. Please install the mesa-utils package..\n\n"\
