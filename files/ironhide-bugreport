@@ -26,7 +26,7 @@
 #
 
 # Definitions
-LOCALECONFIGFILE=.ironhide
+LOCALECONFIGFILE=.ironhiderc
 ROOT_UID=0
 CONFIGURATIONFILE=/etc/default/ironhide
 BUGREPORTHOST=www.martin-juhl.dk
@@ -107,7 +107,7 @@ else
 	disablescript=`echo "Does not exist!" > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
 fi
 
-echo "Ironhide Bug Report" >> /tmp/ironhide-report
+echo "Ironhide Bug Report" > /tmp/ironhide-report
 echo >> /tmp/ironhide-report
 date >> /tmp/ironhide-report
 echo >> /tmp/ironhide-report
@@ -131,10 +131,12 @@ echo "/etc/default/ironhide" >> /tmp/ironhide-report
 echo >> /tmp/ironhide-report
 cat /etc/default/ironhide >> /tmp/ironhide-report
 
-echo >> /tmp/ironhide-report
-echo "~/$LOCALECONFIGFILE" >> /tmp/ironhide-report
-echo >> /tmp/ironhide-report
-cat ~/$LOCALECONFIGFILE >> /tmp/ironhide-report
+if [ -f ~/$LOCALECONFIGFILE ]; then
+	echo >> /tmp/ironhide-report
+	echo "~/$LOCALECONFIGFILE" >> /tmp/ironhide-report
+	echo >> /tmp/ironhide-report
+	cat ~/$LOCALECONFIGFILE >> /tmp/ironhide-report
+fi
 
 echo >> /tmp/ironhide-report
 echo "dmidecode" >> /tmp/ironhide-report

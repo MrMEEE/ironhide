@@ -1,87 +1,10 @@
-totalt 71980
-drwxr-xr-x   6 root root     4096 2011-08-18 09:59 .
-drwxr-xr-x 225 root root   106496 2011-08-25 14:49 ..
--rw-r--r--   1 root root        0 2011-08-18 00:48 alt_ld.so.conf
-drwxr-xr-x   2 root root     4096 2011-08-18 09:59 bin
--rw-r--r--   1 root root       50 2011-08-18 00:50 ld.so.conf
-lrwxrwxrwx   1 root root       17 2011-08-18 09:59 libcuda.so -> libcuda.so.285.03
-lrwxrwxrwx   1 root root       17 2011-08-18 09:59 libcuda.so.1 -> libcuda.so.285.03
--rw-r--r--   1 root root  8215440 2011-08-18 00:50 libcuda.so.285.03
-lrwxrwxrwx   1 root root       10 2011-08-18 09:59 libGL.so -> libGL.so.1
-lrwxrwxrwx   1 root root       15 2011-08-18 09:59 libGL.so.1 -> libGL.so.285.03
--rw-r--r--   1 root root  1032112 2011-08-18 00:50 libGL.so.285.03
-lrwxrwxrwx   1 root root       15 2011-08-18 09:59 libnvcuvid.so -> libnvcuvid.so.1
-lrwxrwxrwx   1 root root       20 2011-08-18 09:59 libnvcuvid.so.1 -> libnvcuvid.so.285.03
--rw-r--r--   1 root root  2192640 2011-08-18 00:50 libnvcuvid.so.285.03
-lrwxrwxrwx   1 root root       18 2011-08-18 09:59 libnvidia-cfg.so -> libnvidia-cfg.so.1
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libnvidia-cfg.so.1 -> libnvidia-cfg.so.285.03
--rw-r--r--   1 root root   136616 2011-08-18 00:50 libnvidia-cfg.so.285.03
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libnvidia-compiler.so -> libnvidia-compiler.so.1
-lrwxrwxrwx   1 root root       28 2011-08-18 09:59 libnvidia-compiler.so.1 -> libnvidia-compiler.so.285.03
--rw-r--r--   1 root root 27399984 2011-08-18 00:50 libnvidia-compiler.so.285.03
--rw-r--r--   1 root root 33845040 2011-08-18 00:50 libnvidia-glcore.so.285.03
-lrwxrwxrwx   1 root root       17 2011-08-18 09:59 libnvidia-ml.so -> libnvidia-ml.so.1
-lrwxrwxrwx   1 root root       22 2011-08-18 09:59 libnvidia-ml.so.1 -> libnvidia-ml.so.285.03
--rw-r--r--   1 root root   230544 2011-08-18 00:50 libnvidia-ml.so.285.03
--rw-r--r--   1 root root    10552 2011-08-18 00:50 libnvidia-tls.so.285.03
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libnvidia-wfb.so.1 -> libnvidia-wfb.so.285.03
--rw-r--r--   1 root root   295272 2011-08-18 00:50 libnvidia-wfb.so.285.03
-lrwxrwxrwx   1 root root       14 2011-08-18 09:59 libOpenCL.so -> libOpenCL.so.1
-lrwxrwxrwx   1 root root       16 2011-08-18 09:59 libOpenCL.so.1 -> libOpenCL.so.1.0
-lrwxrwxrwx   1 root root       18 2011-08-18 09:59 libOpenCL.so.1.0 -> libOpenCL.so.1.0.0
--rw-r--r--   1 root root    21296 2011-08-18 00:50 libOpenCL.so.1.0.0
-lrwxrwxrwx   1 root root       31 2011-08-16 15:26 libvdpau_nvidia.so -> vdpau/libvdpau_nvidia.so.280.13
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libXvMCNVIDIA_dynamic.so.1 -> libXvMCNVIDIA.so.285.03
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libXvMCNVIDIA.so -> libXvMCNVIDIA.so.285.03
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libXvMCNVIDIA.so.1 -> libXvMCNVIDIA.so.285.03
--rw-r--r--   1 root root   156600 2011-08-18 00:50 libXvMCNVIDIA.so.285.03
--rw-r--r--   1 root root       28 2011-08-18 00:50 modprobe.conf
-drwxr-xr-x   2 root root     4096 2011-08-18 09:59 tls
-drwxr-xr-x   2 root root     4096 2011-08-18 09:59 vdpau
-drwxr-xr-x   2 root root     4096 2011-08-18 09:59 xorg
--rw-r--r--   1 root root       27 2011-08-18 00:50 XvMCConfig totalt 148
-drwxr-xr-x   3 root root   4096 2011-08-19 00:17 .
-drwxr-xr-x 225 root root 106496 2011-08-25 14:49 ..
-drwxr-xr-x   6 root root   4096 2011-08-17 17:02 modules
--rw-r--r--   1 root root  31246 2011-08-15 17:48 protocol.txt totalt 71980
-drwxr-xr-x   6 root root     4096 2011-08-18 09:59 .
-drwxr-xr-x 225 root root   106496 2011-08-25 14:49 ..
--rw-r--r--   1 root root        0 2011-08-18 00:48 alt_ld.so.conf
-drwxr-xr-x   2 root root     4096 2011-08-18 09:59 bin
--rw-r--r--   1 root root       50 2011-08-18 00:50 ld.so.conf
-lrwxrwxrwx   1 root root       17 2011-08-18 09:59 libcuda.so -> libcuda.so.285.03
-lrwxrwxrwx   1 root root       17 2011-08-18 09:59 libcuda.so.1 -> libcuda.so.285.03
--rw-r--r--   1 root root  8215440 2011-08-18 00:50 libcuda.so.285.03
-lrwxrwxrwx   1 root root       10 2011-08-18 09:59 libGL.so -> libGL.so.1
-lrwxrwxrwx   1 root root       15 2011-08-18 09:59 libGL.so.1 -> libGL.so.285.03
--rw-r--r--   1 root root  1032112 2011-08-18 00:50 libGL.so.285.03
-lrwxrwxrwx   1 root root       15 2011-08-18 09:59 libnvcuvid.so -> libnvcuvid.so.1
-lrwxrwxrwx   1 root root       20 2011-08-18 09:59 libnvcuvid.so.1 -> libnvcuvid.so.285.03
--rw-r--r--   1 root root  2192640 2011-08-18 00:50 libnvcuvid.so.285.03
-lrwxrwxrwx   1 root root       18 2011-08-18 09:59 libnvidia-cfg.so -> libnvidia-cfg.so.1
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libnvidia-cfg.so.1 -> libnvidia-cfg.so.285.03
--rw-r--r--   1 root root   136616 2011-08-18 00:50 libnvidia-cfg.so.285.03
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libnvidia-compiler.so -> libnvidia-compiler.so.1
-lrwxrwxrwx   1 root root       28 2011-08-18 09:59 libnvidia-compiler.so.1 -> libnvidia-compiler.so.285.03
--rw-r--r--   1 root root 27399984 2011-08-18 00:50 libnvidia-compiler.so.285.03
--rw-r--r--   1 root root 33845040 2011-08-18 00:50 libnvidia-glcore.so.285.03
-lrwxrwxrwx   1 root root       17 2011-08-18 09:59 libnvidia-ml.so -> libnvidia-ml.so.1
-lrwxrwxrwx   1 root root       22 2011-08-18 09:59 libnvidia-ml.so.1 -> libnvidia-ml.so.285.03
--rw-r--r--   1 root root   230544 2011-08-18 00:50 libnvidia-ml.so.285.03
--rw-r--r--   1 root root    10552 2011-08-18 00:50 libnvidia-tls.so.285.03
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libnvidia-wfb.so.1 -> libnvidia-wfb.so.285.03
--rw-r--r--   1 root root   295272 2011-08-18 00:50 libnvidia-wfb.so.285.03
-lrwxrwxrwx   1 root root       14 2011-08-18 09:59 libOpenCL.so -> libOpenCL.so.1
-lrwxrwxrwx   1 root root       16 2011-08-18 09:59 libOpenCL.so.1 -> libOpenCL.so.1.0
-lrwxrwxrwx   1 root root       18 2011-08-18 09:59 libOpenCL.so.1.0 -> libOpenCL.so.1.0.0
--rw-r--r--   1 root root    21296 2011-08-18 00:50 libOpenCL.so.1.0.0
-lrwxrwxrwx   1 root root       31 2011-08-16 15:26 libvdpau_nvidia.so -> vdpau/libvdpau_nvidia.so.280.13
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libXvMCNVIDIA_dynamic.so.1 -> libXvMCNVIDIA.so.285.03
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libXvMCNVIDIA.so -> libXvMCNVIDIA.so.285.03
-lrwxrwxrwx   1 root root       23 2011-08-18 09:59 libXvMCNVIDIA.so.1 -> libXvMCNVIDIA.so.285.03
--rw-r--r--   1 root root   156600 2011-08-18 00:50 libXvMCNVIDIA.so.285.03
--rw-r--r--   1 root root       28 2011-08-18 00:50 modprobe.conf
-drwxr-xr-x   2 root root     4096 2011-08-18 09:59 tls
-drwxr-xr-x   2 root root     4096 2011-08-18 09:59 vdpau
-drwxr-xr-x   2 root root     4096 2011-08-18 09:59 xorg
--rw-r--r--   1 root root       27 2011-08-18 00:50 XvMCConfig
+#!/bin/bash
+LOCALECONFIGFILE=.ironhide
+ROOT_UID=0
+CONFIGURATIONFILE=/etc/default/ironhide
+BUGREPORTHOST=www.martin-juhl.dk
+PIPE=/tmp/pipe
+HEIGHT=500
+WIDTH=700
+
+cat ~/$LOCALECONFIGFILE
