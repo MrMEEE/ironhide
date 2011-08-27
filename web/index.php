@@ -21,22 +21,7 @@ if(isset($_GET["addmachine"])){
         WHERE Manufacturer="%s" AND Model="%s" AND `nVidia Startup`="%s" AND `nVidia Shutdown`="%s"',
         mysql_real_escape_string($manufacturer), mysql_real_escape_string($model),
         mysql_real_escape_string($start), mysql_real_escape_string($shutdown));
-    $query = mysql_query($sql);
-    
-    if($manufacturer!=""&&$model!=""&&$monitor!=""&&$nvidiabusid!=""&&$dmiproduct!=""&&
-    $user!=""&&$monitor!="REPLACEWITHCONNECTEDMONITOR"&&$model!='$MODEL'){
-        $sql = sprintf('INSERT into confirmed(Manufacturer, Model, `nVidia BusID`, `nVidia Startup`,
-            `nVidia Shutdown`, `Confirming User`, `Users Confirming`, Distribution) VALUES
-            ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")',
-            mysql_real_escape_string($manufacturer), mysql_real_escape_string($model),
-            mysql_real_escape_string($monitor), mysql_real_escape_string($intelbusid),
-            mysql_real_escape_string($nvidiabusid), mysql_real_escape_string($start),
-            mysql_real_escape_string($shutdown), mysql_real_escape_string($dmiproduct),
-            mysql_real_escape_string($user), mysql_real_escape_string($distro)
-        );
-        mysql_query($sql);
-        echo "System Added";
-    }
+    $query = mysql_query($sql);    
     $row = mysql_fetch_assoc($query);
     if($row['Manufacturer'] == $manufacturer){
      $id = $row['id'];
@@ -47,7 +32,7 @@ if(isset($_GET["addmachine"])){
      echo "System Added to already existing profile";
     }
     else{
-     if($manufacturer!=""&&$model!=""&&$user!=""&&$user!=$row['Confirming User']){
+     if($manufacturer!=""&&$model!=""&&$user!=""){ // &&$user!=$row['Confirming User']
       $sql = sprintf('INSERT into confirmed (Manufacturer, Model, `nVidia Startup`,
         `nVidia Shutdown`, `Submitting User`, `Users Confirming`, Distribution) VALUES
         ("%s", "%s", "%s", "%s", "%s", 1, "%s")',
