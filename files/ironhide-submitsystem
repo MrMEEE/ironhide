@@ -35,6 +35,7 @@ LSPCI=`which lspci`
 MODPROBE=`which modprobe`
 WHOAMI=`which whoami`
 WGET=`which wget`
+IRONHIDEHOME=/usr/share/ironhide/
 
 # INCLUDES
 source easybashgui
@@ -89,18 +90,20 @@ DISTRO=$(cat /etc/issue | cut -f1 -d\\)
 MANUFACTURER=`dmidecode --string system-manufacturer`
 MODEL=`dmidecode --string system-product-name`
 
-if [ `cat /usr/local/bin/bumblebee-enablecard |grep \$\(acpi |wc -l` -gt 0  ]; then
- STARTUP=`xxd -p /usr/local/bin/bumblebee-enablecard | sed -e ':a;N;$!ba;s/\n//g'`
- SHUTDOWN=`xxd -p /usr/local/bin/bumblebee-disablecard | sed -e ':a;N;$!ba;s/\n//g'`
- STARTUPSTATUS=AVAILABLE
- SHUTDOWNSTATUS=AVAILABLE
-else
- STARTUP=UNAVAILABLE
- SHUTDOWN=UNAVAILABLE
- STARTUPSTATUS=UNAVAILABLE
- SHUTDOWNSTATUS=UNAVAILABLE
+STARTUP=UNAVAILABLE 
+SHUTDOWN=UNAVAILABLE
+STARTUPSTATUS=UNAVAILABLE
+SHUTDOWNSTATUS=UNAVAILABLE
+
+if [ -f /usr/local/bin/bumblebee-enablecard ]; then 
+ if [[ `diff /usr/local/bin/bumblebee-enablecard $IRONHIDEHOME/examples/ironhide-enablecard.template` != "" ]]; then
+ 	STARTUP=`xxd -p /usr/local/bin/bumblebee-enablecard | sed -e ':a;N;$!ba;s/\n//g'`
+ 	SHUTDOWN=`xxd -p /usr/local/bin/bumblebee-disablecard | sed -e ':a;N;$!ba;s/\n//g'`
+ 	STARTUPSTATUS=AVAILABLE
+ 	SHUTDOWNSTATUS=AVAILABLE
+ fi 
 fi
-clear
+
 
 x="question --width $WIDTH --height $HEIGHT"
 ${x} "Distribution: $DISTRO\n"\
