@@ -31,6 +31,7 @@ ARCH=`uname -m`
 CONFIGURATIONFILE=/etc/default/ironhide
 LOCALECONFIGFILE=.ironhide
 DATAFOLDER=/usr/share/ironhide/data/
+EXAMPLEFOLDER=/usr/share/ironhide/examples/
 LASTUPDATE=`stat -c %y $DATAFOLDER/allmachineinfo | cut -d ' ' -f1`
 HEIGHT=500
 WIDTH=700
@@ -169,7 +170,7 @@ if [ -f $DATAFOLDER/machineinfo ]; then
 	do
 		profiles[$i]="$i: `echo $line | cut -f1 -d\|``echo $line |cut -f2 -d\|` by`echo $line | cut -f5 -d\|`, Confirmed by`echo $line |cut -f6 -d\|` users."
 		((i+=1))
-	done < /usr/share/ironhide/data/machineinfo
+	done < $DATAFOLDER/machineinfo
 fi
 
 profiles[i]="9997: Enter Manual Configuration" 
@@ -499,10 +500,10 @@ else
 	${x} "No power-on/off configuration has been reported for your machine,\n"\
 	"please manually enter configuration in:\n\n"\
 	"/usr/local/bin/ironhide-enablecard and /usr/local/bin/ironhide-disablecard\n\n"\
-	"Some examples are available in /usr/share/doc/ironhide/."
+	"Some examples are available in $EXAMPLEFOLDER."
 
-	cp /usr/share/doc/ironhide/examples/ironhide-enablecard.template /usr/local/bin/ironhide-enablecard
-	cp /usr/share/doc/ironhide/examples/ironhide-disablecard.template /usr/local/bin/ironhide-disablecard
+	cp $EXAMPLEFOLDER/ironhide-enablecard.template /usr/local/bin/ironhide-enablecard
+	cp $EXAMPLEFOLDER/ironhide-disablecard.template /usr/local/bin/ironhide-disablecard
 
 fi
 
@@ -554,8 +555,8 @@ if [[ $ERRORS == 0 ]];then
 			answer="${?}"
 			if [ ${answer} -eq 1 ]; then
 				/usr/local/bin/ironhide-enablecard
-				cp /usr/share/doc/ironhide/examples/ironhide-enablecard.template /usr/local/bin/ironhide-enablecard
-				cp /usr/share/doc/ironhide/examples/ironhide-disablecard.template /usr/local/bin/ironhide-disablecard
+				cp $EXAMPLEFOLDER/ironhide-enablecard.template /usr/local/bin/ironhide-enablecard
+				cp $EXAMPLEFOLDER/ironhide-disablecard.template /usr/local/bin/ironhide-disablecard
 				#"We have replaced the"
 				exit 1
 			fi
