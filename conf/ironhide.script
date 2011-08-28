@@ -164,8 +164,13 @@ do_stop()
 }
 
 case "$1" in
-  enable|stop)
-	# weird logic: enable the ironhide server when the system is shut down?
+  start)
+  	$DISABLECARD
+  ;;
+  stop)
+  	$ENABLECARD
+  ;;
+  enable)
 	log_daemon_msg "Starting $DESC" "$NAME "
 	do_start
 	case $? in
@@ -174,8 +179,7 @@ case "$1" in
 		2) log_end_msg 1 ;;
 	esac
 	;;
-  disable|start)
-	# weird logic: disable the ironhide server when the system is started?
+  disable)
 	log_daemon_msg "Stopping $DESC" "$NAME "
 	do_stop
 	case $? in
