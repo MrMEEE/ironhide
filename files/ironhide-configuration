@@ -69,7 +69,6 @@ LIB_CHECK="$(type "easybashgui" 2> /dev/null )"
 [ ${#LIB_CHECK} -eq 0 ] && echo -e "\n\n\n\nYou need to copy \"easybashgui\" in your path\n\n\n\n" 1>&2 && exit 1
 
 
-
 if [[ "`$WHOAMI`" != "root" ]]; then 
 	x="alert_message --height $HEIGHT --width $WIDTH"
 	${x} "ironhide-configuration has been run without root priviledges and can't continue..\nPlease run with sudo, gksudo, kdesudo or similiar."
@@ -82,6 +81,27 @@ if [ $IRONHIDE_CONFIGURED -eq 1 ]; then
 	answer="${?}"
 	if [ ${answer} -eq 1 ]; then
 		exit 0
+	fi
+fi
+
+if [ -f /usr/local/bin/bumblebee-enablecard ] || [ -f /usr/local/bin/bumblebee-disablecard ] || [ -f /etc/pm/power.d/bumblebee-disablecard-on-powerup ]; then
+	if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 1 ] && [ -f /usr/local/bin/bumblebee-enablecard ]; then
+		/usr/local/bin/bumblebee-enablecard
+	fi
+	x="question --height $HEIGHT --width $WIDTH"
+	${x} "Old remains of a Bumblebee installation was found, do you want to rename those files??.\n"\
+	"This is HIGHLY recommend, as they will probably interfere with Ironhide.."
+	answer="${?}"
+	if [ ${answer} -eq 1 ]; then
+		if [ -f /etc/pm/power.d/bumblebee-disablecard-on-powerup ]; then
+			rm -rf /etc/pm/power.d/bumblebee-disablecard-on-powerup
+		fi
+		if [ -f /usr/local/bin/bumblebee-disablecard ]; then
+			rm -rf /usr/local/bin/bumblebee-disablecard
+		fi
+		if [ -f /usr/local/bin/bumblebee-enablecard ]; then
+			rm -rf /usr/local/bin/bumblebee-enablecard
+		fi
 	fi
 fi
 
