@@ -104,14 +104,14 @@ while($row = mysql_fetch_assoc($query)){
     echo htmlspecialchars($row['Model']);
     echo "</td>";
     if ($row['nVidia Startup'] != "UNAVAILABLE"){
-     echo "<td>Available</td>";
+     echo '<td><a href="showinfo.php?show=1&id='. htmlspecialchars($row['id']) . '&info=nVidia Startup">Available</a></td>';
     }
     else
     {
      echo "<td>Unavailable</td>";
     }
     if ($row['nVidia Shutdown'] != "UNAVAILABLE"){
-     echo "<td>Available</td>";
+     echo '<td><a href="showinfo.php?show=1&id='. htmlspecialchars($row['id']) . '&info=nVidia Shutdown">Available</a></td>';
     }
     else
     {   

@@ -116,7 +116,7 @@ done
 nvidia_log=`cat /var/log/Xorg.$VGL_DISPLAY.log > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
 xorg_conf=`cat /etc/X11/xorg.conf > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
 xorg_conf_nvidia=`cat /etc/X11/xorg.conf.nvidia > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
-lspci=`$LSPCI > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
+lspci=`$LSPCI -v > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
 libraries=`echo "\`ls -la /usr/lib32/nvidia-current\` \`ls -la /usr/lib/xorg/\` \`ls -la /usr/lib/nvidia-current\`" > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
 modules=`$LSMOD > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
 alternatives=`echo "\`ls -la /etc/alternatives/\`" > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`

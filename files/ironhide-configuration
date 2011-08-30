@@ -341,7 +341,7 @@ else
 	${x} "The BusID of the nVidia card can't be determined.\n"\
 	"You must correct this manually in /etc/X11/xorg.conf.nvidia\n"\
 	"Please report this problem..\n"
-	exit 1
+	exit 0
 fi
 
 sudo sed -i "s/\([ \t]*BusID[ \t]*\)\".*\"/\1\"$NVIDIABUSID\"/g" /etc/X11/xorg.conf.nvidia
@@ -507,7 +507,7 @@ if [[ $ERRORS == 0 ]]; then
 
 		answer="${?}"
 		if [ ${answer} -eq 1 ]; then
-			exit 1
+			exit 0
 		fi
 				
 	else
@@ -517,7 +517,7 @@ if [[ $ERRORS == 0 ]]; then
 
 		answer="${?}"
 		if [ ${answer} -eq 1 ]; then
-			exit 1
+			exit 0
 		fi
 	fi
 else
@@ -580,7 +580,7 @@ if [[ $ERRORS == 0 ]];then
 
 			answer="${?}"
 			if [ ${answer} -eq 1 ]; then
-				  exit 1
+				  exit 0
 			fi
 		
 		
@@ -595,7 +595,7 @@ if [[ $ERRORS == 0 ]];then
 				cp $EXAMPLEFOLDER/ironhide-enablecard.template /usr/local/bin/ironhide-enablecard
 				cp $EXAMPLEFOLDER/ironhide-disablecard.template /usr/local/bin/ironhide-disablecard
 				#"We have replaced the"
-				exit 1
+				exit 0
 			fi
 		fi
 	fi

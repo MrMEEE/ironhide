@@ -13,7 +13,7 @@ This version features:
 * Major cleanup, removed all content not related to Ubuntu.
 * Updated VirtualGL.
 
-For now there is only natty packages available.
+For now there is maverick, natty and oneiric packages available.
 
 https://launchpad.net/~mj-casalogic/+archive/ironhide/
 
@@ -30,3 +30,11 @@ When new versions come out, just rerun the configuration.
 Report problems/issues here:
 
 https://github.com/MrMEEE/ironhide/issues
+
+BugWeb (Bugreport):
+
+http://www.martin-juhl.dk/bugweb/
+
+Configurations: 
+
+http://www.martin-juhl.dk/ironhide/ 
