@@ -33,6 +33,7 @@ BUGREPORTHOST=www.martin-juhl.dk
 PIPE=/tmp/pipe
 HEIGHT=500
 WIDTH=700
+github_id=0
 
 # Includes
 source easybashgui
@@ -50,7 +51,7 @@ WHOAMI=`which whoami`
 VGL_DISPLAY=`echo $VGL_DISPLAY | cut -f2 -d:`
 
 # DEBUG? Comment Out...
-exec 6>&2 ; exec 2> /dev/null
+#exec 6>&2 ; exec 2> /dev/null
 
 if [[ "$HOME" == "/root" ]]; then
 	echo "Do NOT run ironhide-configuration as the root user.."
@@ -80,14 +81,37 @@ x="input -w $WIDTH -h $HEIGHT 1"
 ${x} "Please enter your name."
 username="$(0< "${dir_tmp}/${file_tmp}" )"
 
+if [[ $username == "" ]]; then
+        exit 0
+fi
+
 x="message --width $WIDTH --height $HEIGHT"
 ${x} "Next you will be asked to enter your Github issue number.\n"\
 "If you haven't already, please go to: https://github.com/MrMEEE/ironhide/issues\n"\
 "And create an issue.."
 
+while [[ $github_id == 0 ]] || [[ $github_id == "Enter Github issue number" ]]; do
 x="input -w $WIDTH -h $HEIGHT 1"
 ${x} "Enter Github issue number"
 github_id="$(0< "${dir_tmp}/${file_tmp}" )"
+
+if [[ $github_id == "" ]]; then
+	exit 0
+fi
+
+rm /tmp/github
+$WGET -O /tmp/github https://github.com/MrMEEE/ironhide/issues/$github_id 1>/dev/null 2>/dev/null
+if [[ `cat /tmp/github |grep -nir "state state-open" |wc -l` < 1 ]]; then
+	github_id=0
+fi
+
+if [[ $github_id == 0 ]] || [[ $github_id == "Enter Github issue number" ]]; then
+	x="alert_message --width $WIDTH --height $HEIGHT"
+	${x} "Please Enter a valid Github issue number.\n"\
+	"If you haven't already, please go to: https://github.com/MrMEEE/ironhide/issues\n"\
+	"And create an issue.."
+fi
+done
 
 nvidia_log=`cat /var/log/Xorg.$VGL_DISPLAY.log > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`
 xorg_conf=`cat /etc/X11/xorg.conf > /tmp/hex && xxd -p /tmp/hex | sed -e ':a;N;$!ba;s/\n//g'`

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ENABLECARD=/usr/local/bin/ironhide-enablecard
 DISABLECARD=/usr/local/bin/ironhide-disablecard

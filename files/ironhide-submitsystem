@@ -95,10 +95,10 @@ SHUTDOWN=UNAVAILABLE
 STARTUPSTATUS=UNAVAILABLE
 SHUTDOWNSTATUS=UNAVAILABLE
 
-if [ -f /usr/local/bin/bumblebee-enablecard ]; then 
- if [[ `diff /usr/local/bin/bumblebee-enablecard $IRONHIDEHOME/examples/ironhide-enablecard.template` != "" ]]; then
- 	STARTUP=`xxd -p /usr/local/bin/bumblebee-enablecard | sed -e ':a;N;$!ba;s/\n//g'`
- 	SHUTDOWN=`xxd -p /usr/local/bin/bumblebee-disablecard | sed -e ':a;N;$!ba;s/\n//g'`
+if [ -f /usr/local/bin/ironhide-enablecard ]; then 
+ if [[ `diff /usr/local/bin/ironhide-enablecard $IRONHIDEHOME/examples/ironhide-enablecard.template` != "" ]]; then
+ 	STARTUP=`xxd -p /usr/local/bin/ironhide-enablecard | sed -e ':a;N;$!ba;s/\n//g'`
+ 	SHUTDOWN=`xxd -p /usr/local/bin/ironhide-disablecard | sed -e ':a;N;$!ba;s/\n//g'`
  	STARTUPSTATUS=AVAILABLE
  	SHUTDOWNSTATUS=AVAILABLE
  fi 
