@@ -352,6 +352,23 @@ if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 0 ]; then
 		/usr/bin/ironhide-disablecard
 	fi
 fi
+if [ "$CONNECTEDMONITOR" != "CRT-0" ] && [ "$CONNECTEDMONITOR" != "DFP-0" ];then
+	sed -i "s/\([ \t]*Option[ \t]*\"ConnectedMonitor\"[ \t]*\)".*"/\1\"CRT-0\"/g" /etc/X11/xorg.conf.nvidia
+        /etc/init.d/ironhide enable
+        ERRORS=`cat /var/log/Xorg.\`echo $VGL_DISPLAY |cut -f2 -d:\`.log |grep EE |grep -v kbd |grep -v MIT-SCREEN-SAVER |grep -v "not implemented" | wc -l`
+        /etc/init.d/ironhide disable
+        if [[ $ERRORS != 0 ]]; then
+                sed -i "s/\([ \t]*Option[ \t]*\"ConnectedMonitor\"[ \t]*\)".*"/\1\"DFP-0\"/g" /etc/X11/xorg.conf.nvidia
+		/etc/init.d/ironhide enable
+	        ERRORS=`cat /var/log/Xorg.\`echo $VGL_DISPLAY |cut -f2 -d:\`.log |grep EE |grep -v kbd |grep -v MIT-SCREEN-SAVER |grep -v "not implemented" | wc -l`
+        	/etc/init.d/ironhide disable
+        	if [[ $ERRORS != 0 ]]; then
+			CONNECTEDMONITOR="DFP-0"
+		fi
+	else
+		CONNECTEDMONITOR="CRT-0"
+	fi
+fi
 
 if [ "$CONNECTEDMONITOR" != "CRT-0" ] && [ "$CONNECTEDMONITOR" != "DFP-0" ];then
 	x="message --width $WIDTH --height $HEIGHT"
