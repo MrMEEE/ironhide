@@ -1,0 +1,22 @@
+csplit -s -k -f Scope $1 '/Scope/' {99} 1>/dev/null 2>/dev/null
+
+for i in `ls Scope*`; do
+	if [[ `cat $i |grep PS0 |wc -l` > 0 ]] || [[ `cat $i |grep PS3 |wc -l` > 0 ]]; then
+	csplit -s -k -f Method $i '/Method/' {99} 1>/dev/null 2>/dev/null
+		for k in `ls Method*`; do
+			if [[ `cat $k |grep PS0 |wc -l` > 0 ]] && [[ `cat $k |grep ON |wc -l` > 0 ]]; then
+				echo "Enable Command: `head -1 $i | cut -f2 -d\( | cut -f1 -d\)`.ON"
+			elif [[ `cat $k |grep PS0 |wc -l` > 0 ]] && [[ `cat $k |grep OFF |wc -l` > 0 ]]; then
+				echo "Disable Command: `head -1 $i | cut -f2 -d\( | cut -f1 -d\)`.OFF"
+                        elif [[ `cat $k |grep PS3 |wc -l` > 0 ]] && [[ `cat $k |grep ON |wc -l` > 0 ]]; then
+				echo "Enable Command: `head -1 $i | cut -f2 -d\( | cut -f1 -d\)`.ON"
+                        elif [[ `cat $k |grep PS3 |wc -l` > 0 ]] && [[ `cat $k |grep OFF |wc -l` > 0 ]]; then
+				echo "Disable Command: `head -1 $i | cut -f2 -d\( | cut -f1 -d\)`.OFF"
+        	        fi
+		echo
+		done
+	rm Method*
+	fi
+done 
+
+rm Scope*
