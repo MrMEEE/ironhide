@@ -6,12 +6,20 @@ through a ppa only...
 I have released the first version of Ironhide, which is going to be my
 branch of bumblebee..
 
-This version features:
+The current version features:
 
 * Graphical User Interface for Configuration and Submitsystem.
+* Settings utility: ironhide-settings.
 * Tests build into the Configuration, should help us narrow down problems.
 * Major cleanup, removed all content not related to Ubuntu.
 * Updated VirtualGL.
+
+Currently the following commands are available after installing Ironhide:
+
+ironhide-configuration - Initial configuration
+ironhide-settings - Lots of different settings
+ironhide-bugreport - Bug Report Utility
+ironhide-submitsystem - Utility to submit working system infomation
 
 For now there is maverick, natty and oneiric packages available.
 
