@@ -21,8 +21,14 @@ VGL_READBACK=pbo
 VGL_LOG=/dev/null
 
 # ECO Mode
-# 1 :	ECO mode active, do not run ironhide on battery power
+# 1 :	ECO mode active, do not run ironhide on battery power.
 # 0 :	ECO mode disabled
 ECO_MODE=1
 
+# ACPI Mode
+# 1 : Always enable nVidia card before disabling it.
+# 0 : Just disable card without enabling it first.
+IRONHIDE_ACPI_MODE=1
+
 IRONHIDE_CONFIGURED=0
+

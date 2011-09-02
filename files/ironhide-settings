@@ -37,7 +37,7 @@ else
 fi
 
 x="menu -w $WIDTH -h $HEIGHT"
-${x} "Automatic Shutdown of nVidia Card: $STOP_SERVICE_ON_EXIT" "Virtual Terminal: $VGL_DISPLAY" "Image Transport: $VGL_COMPRESS" "Read Back Mode: $VGL_READBACK" "Log File for VirtualGL: $VGL_LOG" "Powersave/Economic Mode: $ECO_MODE" "nVidia settings" "Done"
+${x} "Automatic Shutdown of nVidia Card: $STOP_SERVICE_ON_EXIT" "Virtual Terminal: $VGL_DISPLAY" "Image Transport: $VGL_COMPRESS" "Read Back Mode: $VGL_READBACK" "Log File for VirtualGL: $VGL_LOG" "Powersave/Economic Mode: $ECO_MODE" "Always enable the nVidia card before disabling: $IRONHIDE_ACPI_MODE" "nVidia settings" "Done"
 
 choice="$(0< "${dir_tmp}/${file_tmp}" )"
 
@@ -196,6 +196,22 @@ case "$choice" in
 		echo "ECO_MODE=$ECO_MODE" >> ~/$LOCALECONFIGFILE
                 echo "" >> ~/$LOCALECONFIGFILE
         fi
+	;;
+	"Always enable the nVidia card before disabling"*)
+	x="question --width $WIDTH --height $HEIGHT"
+	${x} "If you are getting an error like: FATAL: Error inserting nvidia_current.... no such device, \n"\
+	"either after reboot or after suspend, please try changing this setting..\n"\
+	"Do you want to Always enable the nVidia card before disabling it?"
+	answer="${?}"
+	                      
+	if [ ${answer} -eq 1 ]; then
+		IRONHIDE_ACPI_MODE=1
+	else
+		IRONHIDE_ACPI_MODE=0
+	fi
+	
+	sed -i 's/IRONHIDE_ACPI_MODE.*/IRONHIDE_ACPI_MODE='$IRONHIDE_ACPI_MODE'/' $CONFIGURATIONFILE 
+	
 	;;
 	"nVidia settings"*)
 	        

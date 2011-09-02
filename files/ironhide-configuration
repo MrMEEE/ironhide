@@ -29,7 +29,7 @@
 # Definitions
 ARCH=`uname -m`
 CONFIGURATIONFILE=/etc/default/ironhide
-LOCALECONFIGFILE=.ironhide
+LOCALECONFIGFILE=.ironhiderc
 DATAFOLDER=/usr/share/ironhide/data/
 EXAMPLEFOLDER=/usr/share/ironhide/examples/
 LASTUPDATE=`stat -c %y $DATAFOLDER/allmachineinfo | cut -d ' ' -f1`

@@ -25,14 +25,16 @@ DAEMON_ARGS="-ac -config /etc/X11/xorg.conf.nvidia -sharevts -modulepath /usr/li
 # default PIDFILE which is overidden below
 PIDFILE=/tmp/.X1-lock
 SCRIPTNAME=/etc/init.d/$NAME
-
-# default display, may be overidden in /etc/default/$NAME
-VGL_DISPLAY=:1
+CONFIGURATIONFILE=/etc/default/ironhide
+LOCALECONFIGFILE=.ironhiderc
 
 ENABLECARD=/usr/local/bin/ironhide-enablecard
 DISABLECARD=/usr/local/bin/ironhide-disablecard
 
-[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+. $CONFIGURATIONFILE
+if [ -f $HOME/$LOCALECONFIGFILE ]; then
+	. $HOME/$LOCALECONFIGFILE
+fi
 
 DAEMON_ARGS="$DAEMON_ARGS $VGL_DISPLAY"
 # assume that the display always looks like :1, not sure if :1.1 is possible
