@@ -36,8 +36,20 @@ else
 	ECO_MODE=YES
 fi
 
+if [[ $IRONHIDE_ACPI_MODE == "0" ]]; then
+	IRONHIDE_ACPI_MODE=NO
+else
+	IRONHIDE_ACPI_MODE=YES
+fi
+
+if [ -f /usr/lib/libcuda.so ] && [ -f /usr/lib/libGL.so ] && [ -f /usr/lib/libcuda.so.1 ]; then
+	IRONHIDE_CUDA_STATUS="Created"
+else
+	IRONHIDE_CUDA_STATUS="Not Created"
+fi
+
 x="menu -w $WIDTH -h $HEIGHT"
-${x} "Automatic Shutdown of nVidia Card: $STOP_SERVICE_ON_EXIT" "Virtual Terminal: $VGL_DISPLAY" "Image Transport: $VGL_COMPRESS" "Read Back Mode: $VGL_READBACK" "Log File for VirtualGL: $VGL_LOG" "Powersave/Economic Mode: $ECO_MODE" "Always enable the nVidia card before disabling: $IRONHIDE_ACPI_MODE" "nVidia settings" "Done"
+${x} "Automatic Shutdown of nVidia Card: $STOP_SERVICE_ON_EXIT" "Virtual Terminal: $VGL_DISPLAY" "Image Transport: $VGL_COMPRESS" "Read Back Mode: $VGL_READBACK" "Log File for VirtualGL: $VGL_LOG" "Powersave/Economic Mode: $ECO_MODE" "Always enable the nVidia card before disabling: $IRONHIDE_ACPI_MODE" "Create Symlinks for CUDA Development: $IRONHIDE_CUDA_STATUS" "nVidia settings" "Done"
 
 choice="$(0< "${dir_tmp}/${file_tmp}" )"
 
@@ -211,6 +223,35 @@ case "$choice" in
 	fi
 	
 	sed -i 's/IRONHIDE_ACPI_MODE.*/IRONHIDE_ACPI_MODE='$IRONHIDE_ACPI_MODE'/' $CONFIGURATIONFILE 
+	
+	;;
+	"Create Symlinks for CUDA Development"*)
+	x="question --width $WIDTH --height $HEIGHT"
+        ${x} "Do you want to create symlinks needed for CUDA developmen.\n"\
+        "If not, any existing symlinks will be removed."
+        answer="${?}"
+                                                              
+        if [ ${answer} -eq 0 ]; then
+        	if [ ! -f /usr/lib/libcuda.so ]; then
+			ln -s /usr/lib/nvidia-current/libcuda.so /usr/lib/libcuda.so
+		fi
+		if [ ! -f /usr/lib/libGL.so ]; then
+			ln -s /usr/lib/nvidia-current/libGL.so /usr/lib/libGL.so
+		fi
+		if [ ! -f /usr/lib/libcuda.so.1 ]; then
+			ln -s /usr/lib/nvidia-current/libcuda.so.1 /usr/lib/libcuda.so.1
+		fi
+	else
+		if [ -f /usr/lib/libcuda.so ]; then
+			rm -rf "/usr/lib/libcuda.so"
+		fi
+		if [ -f /usr/lib/libGL.so ]; then  
+			rm -rf "/usr/lib/libGL.so"
+		fi      
+		if [ -f /usr/lib/libcuda.so.1 ]; then
+			rm -rf "/usr/lib/libcuda.so.1"
+		fi
+	fi	                                                                                                                                                                        
 	
 	;;
 	"nVidia settings"*)

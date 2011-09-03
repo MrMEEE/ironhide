@@ -89,10 +89,10 @@ if [ -f /usr/local/bin/bumblebee-enablecard ] || [ -f /usr/local/bin/bumblebee-d
 		/usr/local/bin/bumblebee-enablecard
 	fi
 	x="question --height $HEIGHT --width $WIDTH"
-	${x} "Old remains of a Bumblebee installation was found, do you want to rename those files??.\n"\
+	${x} "Old remains of a Bumblebee installation was found, do you want to remove those files??.\n"\
 	"This is HIGHLY recommend, as they will probably interfere with Ironhide.."
 	answer="${?}"
-	if [ ${answer} -eq 1 ]; then
+	if [ ${answer} -eq 0 ]; then
 		if [ -f /etc/pm/power.d/bumblebee-disablecard-on-powerup ]; then
 			rm -rf /etc/pm/power.d/bumblebee-disablecard-on-powerup
 		fi
