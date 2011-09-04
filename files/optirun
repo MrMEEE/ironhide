@@ -39,7 +39,7 @@
 # -d <display_value> : -d must be followed by :0, :1 or :2 argument (See the VGL doc)
 ### END COMMENT
 
-LOCALECONFIGFILE=.ironhide
+LOCALECONFIGFILE=.ironhiderc
 
 #DEFAULT VALUE
 VGL_DRIVER="/usr/lib/nvidia-current"
