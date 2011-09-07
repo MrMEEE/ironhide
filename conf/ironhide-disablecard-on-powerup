@@ -1,5 +1,7 @@
 #!/bin/bash
 
+CONFIGURATIONFILE=/etc/default/ironhide
+
 source $CONFIGURATIONFILE
 
 ENABLECARD=/usr/local/bin/ironhide-enablecard
@@ -9,7 +11,7 @@ DISABLECARD=/usr/local/bin/ironhide-disablecard
 ## This script disables nVidia card if no optirun is running.
 ####
 if ! pidof -x /usr/bin/optirun /usr/bin/optirun32 /usr/bin/optirun64 >/dev/null; then
-	if [[ `lspci -v -s 01:00 | grep "\!" |wc -l` = 0 ]]; then
+	if [[ `lspci -v -s \`grep BusID /etc/X11/xorg.conf.nvidia | sed -e "s/[ \t]*BusID[ \t]*\"\(.*\)\"/\1/g" |cut -d: -f2,3\` | grep "\!" |wc -l` = 0 ]]; then
 		if [[ $IRONHIDE_ACPI_MODE = "1" ]]; then
 			$ENABLECARD
 		fi
