@@ -216,7 +216,7 @@ case "$choice" in
 	"Do you want to Always enable the nVidia card before disabling it?"
 	answer="${?}"
 	                      
-	if [ ${answer} -eq 1 ]; then
+	if [ ${answer} -eq 0 ]; then
 		IRONHIDE_ACPI_MODE=1
 	else
 		IRONHIDE_ACPI_MODE=0
