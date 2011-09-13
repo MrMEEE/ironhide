@@ -27,6 +27,7 @@ PIDFILE=/tmp/.X1-lock
 SCRIPTNAME=/etc/init.d/$NAME
 CONFIGURATIONFILE=/etc/default/ironhide
 LOCALECONFIGFILE=.ironhiderc
+STARTUPSCRIPT=/etc/pm/power.d/ironhide-disablecard-on-powerup
 
 ENABLECARD=/usr/local/bin/ironhide-enablecard
 DISABLECARD=/usr/local/bin/ironhide-disablecard
@@ -167,7 +168,7 @@ do_stop()
 
 case "$1" in
   start)
-  	$DISABLECARD
+  	$STARTUPSCRIPT
   ;;
   stop)
   	$ENABLECARD
