@@ -374,19 +374,28 @@ if [ `$LSPCI -v -s $NVIDIABUSIDCUT |grep ! |wc -l` = 0 ]; then
 fi
 if [ "$CONNECTEDMONITOR" != "CRT-0" ] && [ "$CONNECTEDMONITOR" != "DFP-0" ];then
 	sed -i "s/\([ \t]*Option[ \t]*\"ConnectedMonitor\"[ \t]*\)".*"/\1\"CRT-0\"/g" /etc/X11/xorg.conf.nvidia
-        /etc/init.d/ironhide enable
-        ERRORS=`cat /var/log/Xorg.\`echo $VGL_DISPLAY |cut -f2 -d:\`.log |grep EE |grep -v kbd |grep -v MIT-SCREEN-SAVER |grep -v "not implemented" | wc -l`
-        /etc/init.d/ironhide disable
-        if [[ $ERRORS != 0 ]]; then
-                sed -i "s/\([ \t]*Option[ \t]*\"ConnectedMonitor\"[ \t]*\)".*"/\1\"DFP-0\"/g" /etc/X11/xorg.conf.nvidia
-		/etc/init.d/ironhide enable
-	        ERRORS=`cat /var/log/Xorg.\`echo $VGL_DISPLAY |cut -f2 -d:\`.log |grep EE |grep -v kbd |grep -v MIT-SCREEN-SAVER |grep -v "not implemented" | wc -l`
-        	/etc/init.d/ironhide disable
-        	if [[ $ERRORS != 0 ]]; then
-			CONNECTEDMONITOR="DFP-0"
-		fi
-	else
-		CONNECTEDMONITOR="CRT-0"
+else
+	sed -i "s/\([ \t]*Option[ \t]*\"ConnectedMonitor\"[ \t]*\)".*"/\1\"$CONNECTEDMONITOR\"/g" /etc/X11/xorg.conf.nvidia
+fi
+rm -rf "/var/log/Xorg.`echo $VGL_DISPLAY |cut -f2 -d:`.log"
+/etc/init.d/ironhide enable
+ERRORS=`cat /var/log/Xorg.\`echo $VGL_DISPLAY |cut -f2 -d:\`.log |grep EE |grep -v kbd |grep -v MIT-SCREEN-SAVER |grep -v "not implemented" | wc -l`
+/etc/init.d/ironhide disable
+
+if [[ $ERRORS != 0 ]]; then
+	CONNECTEDMONITORERRORS=`cat /var/log/Xorg.\`echo $VGL_DISPLAY |cut -f2 -d:\`.log |grep "the valid display devices are" | wc -l`
+	if [[ $CONNECTEDMONITORERRORS > 0 ]];then
+		for i in `cat /var/log/Xorg.8.log |grep "the valid display devices are" |cut -f2 -d\' |sed 's/,//g'`; do 
+			rm -rf "/var/log/Xorg.`echo $VGL_DISPLAY |cut -f2 -d:`.log"
+			sed -i "s/\([ \t]*Option[ \t]*\"ConnectedMonitor\"[ \t]*\)".*"/\1\"$i\"/g" /etc/X11/xorg.conf.nvidia
+			/etc/init.d/ironhide enable
+			ERRORS=`cat /var/log/Xorg.\`echo $VGL_DISPLAY |cut -f2 -d:\`.log |grep EE |grep -v kbd |grep -v MIT-SCREEN-SAVER |grep -v "not implemented" | wc -l`
+			/etc/init.d/ironhide disable			
+			if [[ $ERRORS == 0 ]]; then
+				CONNECTEDMONITOR=$i
+				break 
+			fi
+		done
 	fi
 fi
 
