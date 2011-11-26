@@ -106,6 +106,22 @@ if [ "${0##*/}" = "optirun32" -a -d /usr/lib32/nvidia-current ]; then
 	VGL_DRIVER=/usr/lib32/nvidia-current
 fi
 
+for arg in $@; do
+
+if [[ `echo $arg | grep wine` -eq 0  ]]; then
+
+if [[ `file $arg | grep 64-bit |wc -l` -ne 0 ]];then
+        VGL_DRIVER=/usr/lib/nvidia-current
+        break
+elif [[ `file $arg | grep 32-bit |wc -l` -ne 0 ]];then
+        VGL_DRIVER=/usr/lib32/nvidia-current
+	break
+fi
+
+fi
+                                 
+done
+
 msg_shown=false
 show_msg() {
 	if ! $msg_shown; then
